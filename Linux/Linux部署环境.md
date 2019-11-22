@@ -58,7 +58,7 @@ echo $PATH
 
 ##### 1.下载网站：<http://tomcat.apache.org/>下载  tar.gz  的版本 
 
-![](G:\Linux服务器搭建环境\图片\1.png)
+![](C:\Users\Administrator\Desktop\安装\linux-installation\图片\1.png)
 
 ##### 2.创建tomcat文件夹
 
@@ -121,6 +121,9 @@ firewall-cmd --reload
 
 ```shell
 ---------mysql的基本操作-----------------------------
+mysql连接
+mysql -h192.168.40.150 -umysql_master -p --port=3307
+
 停掉mysql进程：pkill -9 mysql
 进入目录：cd /usr/local/src/
 下载mysql的rpm包：wget http://repo.mysql.com/mysql57-community-release-el7-8.noarch.rpm  解压mysql的压缩包： rpm -ivh mysql57-community-release-el7-8.noarch.rpm 
@@ -142,6 +145,19 @@ GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'YYBrhr_2018' WITH GRANT
 日志文件：/var/log/var/log/mysqld.log 
 服务启动脚本：/usr/lib/systemd/system/mysqld.service 
 socket文件：/var/run/mysqld/mysqld.pid
+
+
+==============================================================
+创建用户
+CREATE USER 'mysql_master'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
+
+
+https://blog.csdn.net/qq_26462567/article/details/86713638
+更改远程链接授权
+grant all privileges on *.* to 'root'@'%';
+刷新权限
+flush privileges; 
+alter user 'root'@'%' identified with mysql_native_password by 'root';
 ```
 
 
@@ -161,6 +177,117 @@ socket文件：/var/run/mysqld/mysqld.pid
 ### 4、redis安装
 
 Redis下载地址： https://redis.io/download
+
+启动redis  ./redis-server ../redis.conf &
+
+
+
+5.docker
+
+```shell
+查看服务
+ps -ef|grep redis
+lsof -i :6379
+netstat -tnlp
+
+查看命令历史记录
+history | grep redis
+查找文件
+find / -name redis-cli
+
+检索
+docker search mysql
+拉取
+docker pull mysql:5.5
+重启docker
+systemctl restart docker
+启动docker
+systemctl start docker
+停止docker
+systemctl stop docker
+查看docker状态
+systemctl status docker
+
+将容器 f47fc5168843 的/etc/mysql/my.cnf目录拷贝到主机的/opt/目录中
+docker cp f47fc5168843:/etc/mysql/my.cnf /opt/
+
+将主机my.cnf目录拷贝到容器 f47fc5168843 的/etc/mysql目录下
+docker cp my.cnf f47fc5168843:/etc/mysql
+
+修改中文乱码问题
+
+docker exec -it <contrainerId> env LANG=C.UTF-8 /bin/bash
+
+导出数据备份
+
+docker exec -it <contrainerId>mysqldump -uroot -proot h3cdb> /home/bak/demo.sql
+
+导入sql文件
+source /home/SQL/mmall.sql
+
+
+修改 docker 时间
+
+cp /usr/share/zoneinfo/Asia/Shanghai    /etc/localtime
+
+
+
+删除docker容器
+docker rm id|name
+
+删除docker镜像
+docker rmi id|name
+
+查看镜像
+docker images
+查看启动的镜像
+docker ps -a
+
+启动mysql镜像
+docker run --name mysql8.0 -p 3307:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0
+docker start redis
+docker stop redis
+       
+启动redis镜像   
+docker run -d  --name redis1  -p 6379:6379  redis --requirepass "redis"
+    
+  
+修改中文乱码问题
+docker exec -it <contrainerId> env LANG=C.UTF-8 /bin/bash
+
+导出数据备份
+docker exec -it <contrainerId>mysqldump -uroot -proot h3cdb> /home/bak/demo.sql
+
+修改 docker 时间
+cp /usr/share/zoneinfo/Asia/Shanghai    /etc/localtime 
+
+
+mysql的命令
+查看数据库
+show databases
+选择数据库
+use 数据库名
+显示表
+show tables
+
+mysql查看表结构命令
+desc 表名
+
+mysql修改表字段
+ALTER TABLE feedback MODIFY COLUMN title varchar(256) DEFAULT NULL COMMENT '标题',
+mysql添加表字段
+ALTER TABLE `scheme_dimension` add `lang_type` tinyint(3) DEFAULT '0' COMMENT '0:中文  1:英文';
+改文件权限
+chmod 644 my.cnf
+
+
+
+
+
+
+
+
+```
 
 
 

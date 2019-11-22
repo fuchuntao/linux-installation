@@ -18,6 +18,16 @@ redis-server --service-install redis.windows.conf --loglevel verbose
 * 停止服务：redis-server --service-stop
 * 卸载服务：redis-server --service-uninstall
 **/
+
+redis 127.0.0.1:6379> config get requirepass
+   (error) ERR operation not permitted
+
+   密码验证：
+
+   redis 127.0.0.1:6379> auth test123
+   OK
+   
+   
 4. 清除缓存：【https://blog.csdn.net/luuvyjune/article/details/81016295】
 	4.1 本地清除，直接打开redis-cli.exe （win窗口操作redis的set和get）
 		1.查看所有键值的缓存
