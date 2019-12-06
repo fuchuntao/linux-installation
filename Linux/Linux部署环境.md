@@ -269,6 +269,8 @@ show databases
 use 数据库名
 显示表
 show tables
+设置表的id变回从1开始自增了
+truncate table 表名
 
 mysql查看表结构命令
 desc 表名
