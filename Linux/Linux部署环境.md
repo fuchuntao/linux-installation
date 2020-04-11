@@ -251,6 +251,11 @@ docker stop redis
 启动redis镜像   
 docker run -d  --name redis1  -p 6379:6379  redis --requirepass "redis"
     
+启动mongodb镜像
+docker run --name mongo -p 27017:27017 -v ~/docker-data/mongo:/data/db -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin -d mongo
+
+
+
   
 修改中文乱码问题
 docker exec -it <contrainerId> env LANG=C.UTF-8 /bin/bash
