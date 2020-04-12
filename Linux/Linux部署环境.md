@@ -279,6 +279,9 @@ truncate table 表名
 
 mysql查看表结构命令
 desc 表名
+mysql的DDL详细信息
+show create table 表名 \G
+
 
 mysql修改表字段
 ALTER TABLE feedback MODIFY COLUMN title varchar(256) DEFAULT NULL COMMENT '标题',
