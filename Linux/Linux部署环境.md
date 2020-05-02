@@ -266,7 +266,7 @@ docker exec -it <contrainerId>mysqldump -uroot -proot h3cdb> /home/bak/demo.sql
 修改 docker 时间
 cp /usr/share/zoneinfo/Asia/Shanghai    /etc/localtime 
 
-
+ 
 mysql的命令
 查看数据库
 show databases
