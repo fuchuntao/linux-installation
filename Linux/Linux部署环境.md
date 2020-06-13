@@ -98,7 +98,6 @@ firewall-cmd --reload
 禁止开机启动
 systemctl disable firewalld.service
 
-
 firewall-cmd --state                           ##查看防火墙状态，是否是running
 firewall-cmd --reload                          ##重新载入配置，比如添加规则之后，需要执行此命令
 firewall-cmd --get-zones                       ##列出支持的zone
