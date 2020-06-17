@@ -154,6 +154,36 @@ flush privileges;
 远程连接授权： 
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'YYBrhr_2018' WITH GRANT OPTION;
 
+--------------给数据库单独创建用户授予权限-------------
+1.先进入mysql容器，
+mysql -uroot -p123456
+
+2.进入要分配用户的数据库，或者创建
+create database test;
+
+use test;
+
+3.进入数据库后创建用户
+create user 'testuser'@'localhost' identified by '123456';
+其中username表示用户名，password表示密码。localhost表示只能本地访问，可以通过修改localhost进行访问控制，包括输入指定IP,修改成%达到不限IP访问
+例如：
+create user 'testuser'@'%' identified by '123456';
+create user 'testuser'@'192.168.40.170' identified by '123456';
+
+4.分配权限
+授予所有权限
+grant all privileges on test.* to 'testuser'@'%';
+分配部分权限
+grant select,insert on test to 'testuser'@'%';
+
+5.刷新权限
+flush privileges;
+
+
+
+
+
+
 -------------配置文件位置--------------------------------
 配置文件：/etc/my.cnf 
 日志文件：/var/log/var/log/mysqld.log 
