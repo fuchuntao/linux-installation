@@ -222,6 +222,8 @@ ALTER TABLE feedback MODIFY COLUMN title varchar(256) DEFAULT NULL COMMENT '标�
 ALTER TABLE `scheme_dimension` add `lang_type` tinyint(3) DEFAULT '0' COMMENT '0:中文  1:英文';
 #改文件权限
 chmod 644 my.cnf
+#删除用户
+drop user zhangsan@'%';
 ```
 
 
