@@ -273,9 +273,9 @@ create user 'testuser'@'192.168.40.170' identified by '123456';
 
 4.分配权限
 授予所有权限
-grant all privileges on test.* to 'testuser'@'%';
+grant all privileges on 数据库名.* to 'testuser'@'%';
 分配部分权限
-grant select,insert on test to 'testuser'@'%';
+grant select,insert on 数据库名 to 'testuser'@'%';
 5.刷新权限
 flush privileges;
 
