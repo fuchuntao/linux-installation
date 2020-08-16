@@ -215,6 +215,10 @@ truncate table 表名
 desc 表名
 #mysql的DDL详细信息
 show create table 表名 \G
+#查询所有用户
+select * from mysql.user;
+#删除用户
+drop user zhangsan@'%';
 
 #mysql修改表字段
 ALTER TABLE feedback MODIFY COLUMN title varchar(256) DEFAULT NULL COMMENT '标题',
@@ -222,8 +226,7 @@ ALTER TABLE feedback MODIFY COLUMN title varchar(256) DEFAULT NULL COMMENT '标�
 ALTER TABLE `scheme_dimension` add `lang_type` tinyint(3) DEFAULT '0' COMMENT '0:中文  1:英文';
 #改文件权限
 chmod 644 my.cnf
-#删除用户
-drop user zhangsan@'%';
+
 ```
 
 
