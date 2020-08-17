@@ -282,8 +282,6 @@ flush privileges;
 
 
 
-
-
 -------------配置文件位置--------------------------------
 配置文件：/etc/my.cnf 
 日志文件：/var/log/var/log/mysqld.log 
