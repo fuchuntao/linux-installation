@@ -392,7 +392,7 @@ cp /usr/share/zoneinfo/Asia/Shanghai    /etc/localtime
 
 ## Windows部署环境
 
-1、JDK
+### 1、JDK
 
 ```shell
 #环境变量
@@ -401,13 +401,13 @@ JAVA_HOME=C:\Program Files\Java\jdk1.8.0_60
 M2_HOME=C:\Program Files\Java\apache-maven-3.5.4
 ```
 
+![](../img/path.png)
 
 
 
+### 2、Maven
 
+配置文件：
 
-
-
-
-
+[../file/settings.xml]()
 
