@@ -4,6 +4,8 @@
 
 ```shell
 #linux常用命令：
+#切换用户
+sudo -i
 #查看服务
 ps -ef|grep redis
 lsof -i :6379
