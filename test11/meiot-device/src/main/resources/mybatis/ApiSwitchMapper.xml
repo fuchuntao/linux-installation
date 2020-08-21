@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.meiot.dao.ApISwitchMapper">
-
-
-	<select id="listSwitchSn" resultType="java.util.Map">
-		SELECT switch_sn AS switchSn,switch_index AS switchIndex,deleted FROM `switch` WHERE serial_number = #{serialNumber}
-	</select>
-</mapper>
