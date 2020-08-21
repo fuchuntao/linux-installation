@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.PcTimerModeMapper">
+	
+	<resultMap id="BaseResultMap" type="cn.meiot.entity.db.PcTimerMode" >
+                 <result column="id" property="id" />
+                <result column="name" property="name" />
+                <result column="type" property="type" />
+                <result column="content" property="content" />
+                <result column="create_time" property="createTime" />
+                <result column="update_time" property="updateTime" />
+                <result column="is_switch" property="isSwitch" />
+                <result column="start_time" property="startTime" />
+                <result column="end_time" property="endTime" />
+                <result column="off" property="off" />
+                <result column="kai" property="kai" />
+                <result column="cycle" property="cycle" />
+                <result column="project_id" property="projectId" />
+                <result column="user_id" property="userId" />
+				<result column="flag" property="flag" />
+				<result column="loadmax" property="loadmax" />
+    </resultMap>
+    
+     <sql id="Base_Column_List">
+               `id`,
+                `name`,
+                `type`,
+                `content`,
+                `create_time`,
+                `update_time`,
+                `is_switch`,
+                `start_time`,
+                `end_time`,
+                `off`,
+                `kai`,
+                `cycle`,
+                `project_id`,
+                `user_id`,
+                `flag`,
+                `loadmax`
+    </sql>
+	
+	<select id="queryPage" resultType="cn.meiot.entity.db.PcTimerMode">
+		SELECT
+			`id`,
+			`name`,
+			`type`,
+			`content`,
+			`is_switch` AS isSwitch,
+			`start_time` AS startTime,
+			`end_time` AS endTime,
+			`off`,
+			`kai`,
+			`cycle`,
+			`flag`,
+			`loadmax`,
+			COUNT(DISTINCT(t.serialNumber)) AS serialCount,
+			COUNT(DISTINCT(t.switchSn)) AS switchCount
+        FROM
+        	pc_timer_mode
+		LEFT JOIN(
+		SELECT
+		time_equiment.time_id AS e_id,
+		time_switch.time_id AS t_id,
+		equipment_user.id AS serialNumber,
+		time_switch.id AS switchSn
+		FROM
+		`time_equiment`
+		LEFT JOIN equipment_user ON time_equiment.equiment_id = equipment_user.id
+		LEFT JOIN switch ON switch.serial_number = equipment_user.serial_number
+		LEFT  JOIN `time_switch` ON time_switch.switch_sn = switch.switch_sn ) AS t
+		ON
+		t.e_id = pc_timer_mode.id
+		AND
+		t.t_id = pc_timer_mode.id
+        WHERE
+        	project_id = #{projectId}
+        AND
+        	user_id = #{userId}
+        <if test=" name != null and name != '' ">
+        AND
+        	name LIKE CONCAT('%',#{name},'%')
+        </if>
+        AND
+			flag = #{flag}
+		GROUP BY id
+        ORDER BY pc_timer_mode.id DESC
+
+	</select>
+	
+	<select id="selectId" resultType="Long">
+		SELECT id FROM `pc_timer_mode` ORDER BY pc_timer_mode.id DESC limit 1
+	</select>
+	
+	<insert id="insertPc" useGeneratedKeys="true" keyColumn="id">
+        INSERT INTO pc_timer_mode
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                        <if test ='null != id'>
+                        `id`,
+                        </if>
+                        <if test ='null != name'>
+                        `name`,
+                        </if>
+                        <if test ='null != type'>
+                        `type`,
+                        </if>
+                        <if test ='null != content'>
+                        `content`,
+                        </if>
+                        <if test ='null != createTime'>
+                        `create_time`,
+                        </if>
+                        <if test ='null != updateTime'>
+                        `update_time`,
+                        </if>
+                        <if test ='null != isSwitch'>
+                        `is_switch`,
+                        </if>
+                        <if test ='null != startTime'>
+                        `start_time`,
+                        </if>
+                        <if test ='null != endTime'>
+                        `end_time`,
+                        </if>
+                        <if test ='null != off'>
+                        `off`,
+                        </if>
+                        <if test ='null != on'>
+                        `kai`,
+                        </if>
+                        <if test ='null != cycle'>
+                        `cycle`,
+                        </if>
+                        <if test ='null != projectId'>
+                        `project_id`,
+                        </if>
+                        <if test ='null != userId'>
+                        `user_id`
+                        </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                        <if test ='null != id'>
+                        #{id},
+                        </if>
+                        <if test ='null != name'>
+                        #{name},
+                        </if>
+                        <if test ='null != type'>
+                        #{type},
+                        </if>
+                        <if test ='null != content'>
+                        #{content},
+                        </if>
+                        <if test ='null != createTime'>
+                        #{createTime},
+                        </if>
+                        <if test ='null != updateTime'>
+                        #{updateTime},
+                        </if>
+                        <if test ='null != isSwitch'>
+                        #{isSwitch},
+                        </if>
+                        <if test ='null != startTime'>
+                        #{startTime},
+                        </if>
+                        <if test ='null != endTime'>
+                        #{endTime},
+                        </if>
+                        <if test ='null != off'>
+                        #{off},
+                        </if>
+                        <if test ='null != on'>
+                        #{kai},
+                        </if>
+                        <if test ='null != cycle'>
+                        #{cycle},
+                        </if>
+                        <if test ='null != projectId'>
+                        #{projectId},
+                        </if>
+                        <if test ='null != userId'>
+                        #{userId}
+                        </if>
+        </trim>
+    </insert>
+	
+	
+	<select id="querySwitch" resultMap="BaseResultMap">
+		SELECT
+			pc_timer_mode.*
+		FROM
+			switch
+		JOIN
+			time_switch
+		ON
+			switch.switch_sn = time_switch.switch_sn
+		JOIN
+			pc_timer_mode
+		ON
+			time_switch.time_id = pc_timer_mode.id
+		WHERE
+			switch.switch_sn = #{switchSn}
+		GROUP BY
+			time_switch.id
+	</select>
+	
+	<resultMap id="getSelf" type="cn.meiot.entity.dto.pc.examination.ExaminationBuildingDto">
+	   <id column="id" property="id"></id>
+	   <result column="name" property="name"></result>
+	   <result column="pId" property="pId"></result>
+	   <result column="level" property="level"></result>
+	   <collection property="listData" ofType="cn.meiot.entity.dto.pc.examination.ExaminationBuildingDto" select="selectByPid" column="id"/>
+	</resultMap>
+	
+	
+	<select id = "selectByPid" resultMap="getSelf">
+	 	SELECT
+			building.id,
+			building.parent_id AS pId,
+			building.name,
+			building.level
+		FROM
+			`building`
+		WHERE
+			building.parent_id = #{pId}
+ 	</select>
+	
+	 <select id="queryBuilding" resultMap="getSelf" >
+	  	SELECT
+			building.id,
+			building.parent_id AS pId,
+			building.name,
+			building.level
+		FROM
+			`building`
+		WHERE
+			building.parent_id = 0
+		AND
+			building.project_id = #{projectId}
+		AND
+			building.user_id = #{userId}
+ 	</select>
+	
+	<select id="queryTimeBuilding" resultType="Long">
+		SELECT
+			time_building.building_id
+		FROM
+			pc_timer_mode
+		JOIN
+			time_building
+		ON
+			pc_timer_mode.id = time_building.time_id
+		WHERE
+			pc_timer_mode.id = #{id}
+	</select>
+	
+	<select id="queryTimeSwitch" resultType="String">
+		SELECT
+			time_switch.switch_sn
+		FROM
+			pc_timer_mode
+		JOIN
+			time_switch
+		ON
+			pc_timer_mode.id = time_switch.time_id
+		WHERE
+			pc_timer_mode.id = #{id}
+	</select>
+	
+	<select id="queryTimeEquiment" resultType="Long">
+		SELECT
+			time_equiment.equiment_id
+		FROM
+			pc_timer_mode
+		JOIN
+			time_equiment
+		ON
+			pc_timer_mode.id = time_equiment.time_id
+		WHERE
+			pc_timer_mode.id = #{id}
+	</select>
+	
+	<insert id="insertBuilding" >
+		INSERT INTO ${table}_building (
+			id,
+			building_id,
+		${table}_id
+		)
+		<include refid="foreach"/>
+	</insert>
+	
+	<insert id="insertEquiment" >
+		INSERT INTO ${table}_equiment (
+			id,
+			equiment_id,
+			${table}_id
+		)
+		<include refid="foreach"/>
+	</insert>
+	
+	<insert id="insertSwitch" >
+		INSERT INTO ${table}_switch (
+			id,
+			switch_sn,
+			${table}_id
+		)
+		<include refid="foreach"/>
+	</insert>
+	<insert id="insertSwitchNum">
+		INSERT INTO time_switch (
+			`id`,
+			`switch_sn`,
+			`time_id`,
+			`time_num`
+		)
+		VALUES
+			(
+				null,
+				#{switchSn},
+				#{id},
+				#{num}
+			);
+	</insert>
+
+	<select id="selectPid" resultType="Long">
+		SELECT parent_id FROM `building` WHERE building.parent_id IN
+		<foreach collection="list" item="item" open="(" close=")" index="index"  separator="," >
+			#{item}
+		</foreach>
+	</select>
+	<select id="querySwitchList" resultType="java.util.Map">
+		SELECT
+			switch_name.`name` AS switchName,
+			switch.switch_sn AS switchSn,
+			equipment_user.`name` AS serialName,
+			equipment.building_id AS buildingId
+		FROM (
+			SELECT
+				${table}_switch.switch_sn
+			FROM
+				${table}_switch
+			WHERE
+				${table}_switch.${table}_id = #{id}
+		) AS t1
+		LEFT JOIN
+		switch_name
+		ON
+		t1.switch_sn = switch_name.switch_sn
+		JOIN
+		switch
+		ON
+		switch.switch_sn = t1.switch_sn
+		JOIN
+		equipment_user
+		ON
+		switch.serial_number = equipment_user.serial_number
+		JOIN
+		equipment
+		ON
+		equipment_user.serial_number = equipment.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		AND
+			equipment_user.user_id = #{userId}
+		<if test="buildingList!= null">
+			AND
+			equipment.building_id IN
+			<foreach collection="buildingList" item="item" index="index"  separator="," open="(" close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test=" name != null and name != '' ">
+			AND
+			(
+				switch_name.`name` LIKE CONCAT('%',#{name},'%')
+			OR
+				equipment_user.`name` LIKE CONCAT('%',#{name},'%')
+			)
+		</if>
+	</select>
+
+	<resultMap id="equipment" type="cn.meiot.entity.dto.pc.examination.PcExamination">
+		<result property="name" column="name"/>
+		<result property="serialNumber" column="serial_number"/>
+		<result property="buildingId" column="building_id"/>
+		<result property="equipmentId" column="equipmentId"/>
+		<collection property="switchDtoList" ofType="cn.meiot.entity.dto.pc.examination.SwitchDto">
+			<result property="switchSn" column="switch_sn"/>
+			<result property="switchName" column="switchName"/>
+		</collection>
+	</resultMap>
+    <select id="queryEquipment" resultMap="equipment">
+		SELECT
+			equipment_user.`name`,
+			equipment_user.serial_number,
+			equipment_user.id AS equipmentId,
+			equipment.building_id,
+			switch.switch_sn,
+			switch_name.`name` AS switchName
+		FROM
+		(
+		SELECT
+			time_equiment.equiment_id
+		FROM
+			time_equiment
+		WHERE
+			time_id = #{id}
+		) AS time_equiment
+		JOIN
+			equipment_user
+		ON
+			time_equiment.equiment_id = equipment_user.id
+		JOIN
+			equipment
+		ON
+			equipment_user.serial_number = equipment.serial_number
+		JOIN
+			switch
+		ON
+			equipment_user.serial_number = switch.serial_number
+		JOIN
+			switch_name
+		ON
+			switch.switch_sn = switch_name.switch_sn
+		JOIN
+			time_switch
+		ON
+			switch.switch_sn = time_switch.switch_sn
+		WHERE
+			time_switch.time_id = #{id}
+		AND
+			switch_name.user_id = #{userId}
+	</select>
+	<select id="queryNoTimeSwitch" resultType="java.lang.String">
+		SELECT
+			distinct(time_switch.switch_sn)
+		FROM
+			pc_timer_mode
+		JOIN
+			time_switch
+		ON
+			pc_timer_mode.id = time_switch.time_id
+		WHERE
+			pc_timer_mode.project_id = #{projectId}
+		<if test="id != null">
+		AND
+			pc_timer_mode.id != #{id}
+		</if>
+	</select>
+	<select id="querySwitchNum" resultType="java.lang.Integer">
+		SELECT
+			DISTINCT(time_num)
+		FROM
+			time_switch
+		JOIN
+			pc_timer_mode
+		ON
+			time_switch.time_id = pc_timer_mode.id
+		WHERE
+			pc_timer_mode.flag = #{flag}
+		AND
+			switch_sn = #{switchSn}
+		AND
+			time_num >= 0
+	</select>
+	<select id="queryTimeSwitchById" resultType="java.util.Map">
+		SELECT switch_sn AS switchSn,time_num AS num FROM time_switch WHERE time_id = #{id}
+	</select>
+
+	<sql id="foreach">
+		VALUES
+		<foreach collection="list" item="item" index="index"  separator="," >
+			(NULL, #{item}, #{id})
+		</foreach>
+	</sql>
+</mapper>

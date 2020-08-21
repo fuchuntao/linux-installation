@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.AppMeterHoursMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.AppMeterHours">
+        <id column="id" property="id"/>
+        <result column="serial_number" property="serialNumber"/>
+        <result column="switch_index" property="switchIndex"/>
+        <result column="switch_sn" property="switchSn"/>
+        <result column="meter" property="meter"/>
+        <result column="s_year" property="sYear"/>
+        <result column="s_month" property="sMonth"/>
+        <result column="s_day" property="sDay"/>
+        <result column="s_time" property="sTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="user_id" property="userId"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, serial_number, switch_index, switch_sn, meter, s_time, create_time,user_id,s_year,s_month,s_day,update_time
+    </sql>
+    <select id="getCountByCondition" resultType="java.lang.Long">
+        select
+         id
+         from app_meter_hours where
+            serial_number = #{map.serial_number}
+            and switch_sn = #{map.switch_sn}
+            and s_year = #{map.s_year}
+            and s_month = #{map.s_month}
+            and s_day = #{map.s_day}
+            and s_time = #{map.s_time}
+            and user_id = #{map.user_id}
+    </select>
+    <select id="getLastInfoByCondition" resultType="cn.meiot.entity.AppMeterHours">
+        select
+        id, serial_number, switch_index, switch_sn,sum(meter) as  meter, s_time, create_time,user_id,s_year,s_month,s_day,update_time
+        from app_meter_hours where
+        serial_number = #{map.serial_number}
+        and switch_sn = #{map.switch_sn}
+        and s_year = #{map.s_year}
+        and s_month = #{map.s_month}
+        and s_day = #{map.s_day}
+        and s_time  <![CDATA[<= ]]> #{map.s_time}
+        order by create_time desc limit 1
+
+
+    </select>
+    <select id="getNowDayByCondition" resultType="java.math.BigDecimal">
+        SELECT
+          SUM(meter) AS meter
+        FROM
+          `app_meter_hours`
+        WHERE serial_number = #{appMeterVo.serialNumber}
+          AND switch_sn = #{appMeterVo.switchSn}
+          AND s_year =#{appMeterVo.year}
+          AND s_month = #{appMeterVo.month}
+          AND s_day = #{appMeterVo.day}
+          AND user_id = #{appMeterVo.userId}
+
+    </select>
+    <select id="getLastTotalMaterBySerialNumber" resultType="cn.meiot.entity.AppMeterMonths">
+
+        SELECT
+           serial_number, switch_index, switch_sn, user_id,s_year,s_month,s_day, SUM(meter) AS meter
+        FROM
+          `app_meter_hours`
+          WHERE
+           s_year = #{appMeterVo.year}
+          AND s_month = #{appMeterVo.month}
+          AND s_day = #{appMeterVo.day}
+          and serial_number = #{appMeterVo.serialNumber}
+          and switch_sn = #{appMeterVo.switchSn}
+    </select>
+    <select id="getList" resultType="java.util.Map">
+        select  s_time as hours,  meter from app_meter_hours
+
+        WHERE serial_number = #{appMeterVo.serialNumber}
+          AND switch_sn = #{appMeterVo.switchSn}
+          AND s_year =#{appMeterVo.year}
+          AND s_month = #{appMeterVo.month}
+          AND s_day = #{appMeterVo.day}
+          AND user_id = #{appMeterVo.userId}
+        order by s_time
+
+    </select>
+    <select id="getLastDaySerialNumber" resultType="java.lang.String">
+         SELECT
+          distinct  serial_number
+        FROM
+          `app_meter_hours`
+          WHERE
+           s_year = #{year}
+          AND s_month = #{month}
+          AND s_day = #{day}
+    </select>
+    <select id="getBatteryLeftHours" resultType="cn.meiot.entity.bo.BatteryLeftBo">
+        SELECT  meter AS sumMeter
+        FROM `app_meter_months`
+        WHERE
+            s_year = #{map.year}
+        AND s_month = #{map.month}
+        AND s_day = #{map.day}
+        AND serial_number = #{map.serialNumber}
+        AND switch_sn = #{map.switchSn}
+        AND user_id = #{map.rtuserId}
+    </select>
+    <select id="getNowMonthByCondition" resultType="cn.meiot.entity.bo.BatteryLeftBo">
+        SELECT  MAX(meter) AS maxMeter ,MIN(meter) AS minMeter, AVG(meter) AS avgMeter, SUM(meter) AS sumMeter
+        FROM `app_meter_hours`
+        WHERE serial_number = #{appMeterVo.serialNumber}
+          AND switch_sn = #{appMeterVo.switchSn}
+          AND s_year =#{appMeterVo.year}
+          AND s_month = #{appMeterVo.month}
+          AND user_id = #{appMeterVo.userId}
+    </select>
+    <select id="selectListBySerialNumber" resultType="cn.meiot.entity.vo.AppMeterMonthsVo">
+        SELECT
+            user_id as userId,
+            serial_number as serialNumber,
+            switch_index as switchIndex,
+            switch_sn as switchSn,
+            s_year as sYear,
+            s_month as sMonth,
+            s_day as sDay,
+            SUM(meter) AS meter,
+            project_id AS projectId
+        FROM
+            `app_meter_hours`
+        WHERE
+            s_year = #{appMeterVo.year}
+
+            AND s_month = #{appMeterVo.month}
+
+            AND s_day = #{appMeterVo.day}
+        GROUP BY
+            serial_number,switch_sn,user_id
+    </select>
+
+
+
+    <select id="selectListByMonths" resultType="cn.meiot.entity.vo.AppMeterMonthsVo">
+        SELECT
+        user_id AS userId,
+        project_id AS projectId,
+        serial_number AS serialNumber,
+        switch_index AS switchIndex,
+        switch_sn AS switchSn,
+        s_year AS sYear,
+        s_month AS sMonth
+        <if test="type == 1 ">
+            ,s_day AS sDay
+        </if>
+        FROM
+        ${platform}_${tableName}_${timeName}
+        WHERE
+        1=1
+        <if test ="sYear != null ">
+            AND
+            s_year = #{sYear}
+        </if>
+        <if test ="sMonth != null ">
+            AND
+            s_month = #{sMonth}
+        </if>
+        <if test ="sDay != null ">
+            AND
+            s_day = #{sDay}
+        </if>
+        GROUP BY
+        serial_number,switch_sn
+        <if test ="platform == 'pc'">
+            ,project_id
+        </if>
+        <if test ="platform == 'app' or tableName == 'leakage' or tableName == 'power' or tableName == 'temp'">
+            ,user_id
+        </if>
+    </select>
+    <select id="selectByOne" resultType="java.util.Map">
+        SELECT
+        ${tableName} AS data,id
+        FROM
+        ${platform}_${tableName}_${timeName}
+        WHERE
+        1=1
+        <if test ="serialNumber != null">
+            AND
+            serial_number = #{serialNumber}
+        </if>
+        <if test ="switchSn != null">
+            AND
+            switch_sn = #{switchSn}
+        </if>
+
+        <if test ="sYear != null">
+            AND
+            s_year = #{sYear}
+        </if>
+        <if test ="sMonth != null">
+            AND
+            s_month = #{sMonth}
+        </if>
+        <if test ="sDay != null and type != 0">
+            AND
+            s_day = #{sDay}
+        </if>
+        <if test ="sTime != null and type == 2">
+            AND
+            s_time = #{sTime}
+        </if>
+
+        <if test ="projectId != null">
+            AND
+            project_id = #{projectId}
+        </if>
+        <if test ="userId != null">
+            AND
+            user_id = #{userId}
+        </if>
+    </select>
+    <insert id="insertByOne">
+        INSERT INTO ${platform}_${tableName}_${timeName} (
+        `id`,
+        `serial_number`,
+        `switch_index`,
+        `switch_sn`,
+        `${tableName}`,
+        `s_year`,
+        `s_month`,
+        <if test='type == 1 or type == 2'>
+            `s_day`,
+        </if>
+        <if test='type == 2'>
+            `s_time`,
+        </if>
+
+        `create_time`,
+        `user_id`,
+        `project_id`
+        )
+        VALUES
+        (
+        NULL,
+        #{serialNumber},
+        #{switchIndex},
+        #{switchSn},
+        #{data},
+        #{sYear},
+        #{sMonth},
+        <if test='type == 1 or type == 2'>
+            #{sDay},
+        </if>
+        <if test='type == 2'>
+            #{sTime},
+        </if>
+        #{createTime},
+        #{userId},
+        #{projectId}
+        )
+    </insert>
+    <update id="updateByone">
+      UPDATE
+      ${platform}_${tableName}_${timeName}
+      SET ${tableName} = #{data}
+      WHERE id = #{id}
+    </update>
+
+    <select id="getMonthlyMeterApp" resultType="java.util.Map">
+        SELECT
+        <if test="parametersDto.type == 0 ">
+            s_month AS name,
+        </if>
+        <if test="parametersDto.type == 1 ">
+            s_day AS name,
+        </if>
+        <if test="parametersDto.type == 2 ">
+            s_time AS name,
+        </if>
+        SUM(meter) AS value
+        FROM ${parametersDto.platform}_${parametersDto.tableName}_${parametersDto.timeName}
+        WHERE serial_number = #{appMeterVo.serialNumber}
+        AND switch_sn = #{appMeterVo.switchSn}
+        <if test="parametersDto.sYear != null ">
+            AND s_year = #{parametersDto.sYear}
+        </if>
+        <if test="parametersDto.sMonth != null ">
+            AND s_month = #{parametersDto.sMonth}
+        </if>
+        <if test="parametersDto.sDay != null ">
+            AND s_day = #{parametersDto.sDay}
+        </if>
+        <if test="parametersDto.projectId != 0 ">
+            AND project_id = #{parametersDto.projectId}
+        </if>
+        <if test="parametersDto.projectId == 0 ">
+            AND user_id = #{appMeterVo.userId}
+        </if>
+        GROUP BY
+        <if test="parametersDto.type == 0 ">
+            s_month
+        </if>
+        <if test="parametersDto.type == 1 ">
+            s_day
+        </if>
+        <if test="parametersDto.type == 2 ">
+            s_time
+        </if>
+
+    </select>
+</mapper>

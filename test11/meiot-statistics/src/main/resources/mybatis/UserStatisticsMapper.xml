@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.UserStatisticsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.UserStatistics">
+        <id column="id" property="id" />
+        <result column="year" property="year" />
+        <result column="month" property="month" />
+        <result column="user_total" property="userTotal" />
+        <result column="type" property="type" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, year, month, user_total, type
+    </sql>
+    <update id="updateUserTotal">
+        UPDATE user_statistics
+        <set>
+            <if test="userStatistics.userTotal != null and userStatistics.userTotal != ''">
+                user_statistics.user_total = #{userStatistics.userTotal}
+            </if>
+        </set>
+        WHERE
+          year = #{userStatistics.year}
+
+          AND month = #{userStatistics.month}
+
+          AND type = #{userStatistics.type}
+    </update>
+
+    <select id="getUserTotal" resultType="java.lang.Integer">
+        SELECT
+            user_total
+        FROM
+            user_statistics
+        WHERE
+          year = #{userStatistics.year}
+
+          AND month = #{userStatistics.month}
+
+          AND type = #{userStatistics.type}
+    </select>
+
+    <select id="getUserTotalList" resultType="java.util.Map">
+        SELECT
+        year,
+        month,
+        user_total AS value
+        FROM
+        user_statistics
+        WHERE
+        <if test = "pcDataVo.oldYear != null and pcDataVo.oldYear != ''" >
+            (
+            (
+                year = #{pcDataVo.year}
+            <if test = "pcDataVo.month != null and pcDataVo.month != ''" >
+                AND month >= #{pcDataVo.month}
+            </if>
+            )
+            OR
+            (
+            year = #{pcDataVo.oldYear}
+            <if test = "pcDataVo.oldMonth != null and pcDataVo.oldMonth != ''" >
+                AND month >= #{pcDataVo.oldMonth}
+            </if>
+            )
+            )
+        </if>
+
+        <if test = "pcDataVo.oldYear == null and pcDataVo.year != null" >
+            year = #{pcDataVo.year}
+            <if test = "pcDataVo.month != null and pcDataVo.month != ''" >
+                AND month >= #{pcDataVo.month}
+            </if>
+        </if>
+        <if test = "pcDataVo.type != null" >
+            AND type = #{pcDataVo.type}
+        </if>
+        ORDER BY year, month
+    </select>
+    <select id="getList" resultType="cn.meiot.entity.UserStatistics">
+        SELECT
+          year, month, user_total AS userTotal, type
+        FROM
+            user_statistics
+        WHERE
+          year = #{userStatistics.year}
+
+          AND month = #{userStatistics.month}
+    </select>
+
+
+</mapper>

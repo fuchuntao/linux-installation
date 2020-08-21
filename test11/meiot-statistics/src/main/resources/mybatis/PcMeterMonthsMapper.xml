@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.PcMeterMonthsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.PcMeterMonths">
+        <id column="id" property="id" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="switch_index" property="switchIndex" />
+        <result column="switch_sn" property="switchSn" />
+        <result column="meter" property="meter" />
+        <result column="s_year" property="sYear" />
+        <result column="s_month" property="sMonth" />
+        <result column="s_day" property="sDay" />
+        <result column="create_time" property="createTime" />
+        <result column="user_id" property="userId" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, serial_number, switch_index, switch_sn, meter, s_year, s_month, s_day, create_time, user_id, update_time
+    </sql>
+    <select id="selectListBySerialNumberPc" resultType="cn.meiot.entity.vo.AppMeterMonthsVo">
+         SELECT user_id,serial_number, switch_index, switch_sn,  s_year, s_month,SUM(meter) AS meter,project_id AS projectId
+
+        FROM pc_meter_months
+
+        WHERE s_year = #{appMeterVo.year} AND s_month = #{appMeterVo.month}
+
+        GROUP BY serial_number,switch_sn,project_id
+
+    </select>
+    <select id="getMonthMeterByProjectId" resultType="java.math.BigDecimal">
+        SELECT SUM(a.meter) AS value FROM
+        (
+        SELECT s_day,meter FROM pc_meter_months WHERE id = 0
+        <foreach collection="list" item="item" index="index">
+            UNION all
+            SELECT s_day,meter
+            FROM pc_meter_months
+            WHERE serial_number = #{item.serialNumber}
+            AND switch_sn = #{item.masterSn}
+            AND s_month = #{month}
+            AND project_id = #{projectId}
+        </foreach>
+        ) a
+    </select>
+    <select id="getMaxMonthMeterByProjectId" resultType="java.math.BigDecimal">
+        <!--SELECT sum(meter) AS data-->
+        <!--from pc_meter_years-->
+        <!--WHERE project_id = #{projectId}-->
+
+        <!--<if test="list != null and list.size() > 0">-->
+            <!--AND switch_sn in-->
+            <!--<foreach collection="list" index="index"-->
+                     <!--item="item" open="(" separator="," close=")">-->
+                <!--#{item.masterSn}-->
+            <!--</foreach>-->
+        <!--</if>-->
+
+        <!--GROUP BY s_year,s_month-->
+        <!--ORDER BY data-->
+        <!--DESC LIMIT 1-->
+
+
+
+        SELECT sum(meter) AS data
+        from (
+        select meter, s_month
+        from pc_meter_years
+        WHERE id = 0
+        <foreach collection="list" item="item" index="index">
+            UNION all
+            SELECT meter, s_month
+            FROM pc_meter_years
+            WHERE serial_number = #{item.serialNumber}
+            AND switch_sn = #{item.masterSn}
+            <if test="year != null ">
+                AND s_year = #{year}
+            </if>
+        </foreach>
+        ) a
+        GROUP BY a.s_month
+        ORDER BY data
+        DESC LIMIT 1
+    </select>
+    <select id="getMaxDayMeterByProjectId" resultType="java.math.BigDecimal">
+        <!--SELECT sum(meter) AS data-->
+        <!--from pc_meter_months-->
+        <!--WHERE project_id = #{projectId}-->
+        <!--<if test="list != null and list.size() > 0">-->
+            <!--AND switch_sn in-->
+            <!--<foreach collection="list" index="index"-->
+                     <!--item="item" open="(" separator="," close=")">-->
+                <!--#{item.masterSn}-->
+            <!--</foreach>-->
+        <!--</if>-->
+        <!--GROUP BY s_year,s_month,s_day-->
+        <!--ORDER BY data-->
+        <!--DESC LIMIT 1-->
+
+        SELECT sum(meter) AS data
+        from (
+        select meter, s_month,s_day
+        from pc_meter_months
+        WHERE id = 0
+        <foreach collection="list" item="item" index="index">
+            UNION all
+            SELECT meter, s_month,s_day
+            FROM pc_meter_months
+            WHERE serial_number = #{item.serialNumber}
+            AND switch_sn = #{item.masterSn}
+            <if test="year != null ">
+                AND s_year = #{year}
+            </if>
+        </foreach>
+
+        ) a
+        GROUP BY a.s_month,a.s_day
+        ORDER BY data
+        DESC LIMIT 1
+    </select>
+    <select id="getPcBatteryLeftMonth" resultType="cn.meiot.entity.bo.BatteryLeftBo">
+        SELECT sum(meter) AS sumMeter
+        FROM pc_meter_months
+        WHERE s_year = #{map.year}
+        AND s_month = #{map.month}
+        AND project_id = #{map.projectId}
+        <if test="list != null and list.size() > 0">
+            AND switch_sn in
+            <foreach collection="list" index="index"
+                     item="item" open="(" separator="," close=")">
+                #{item.masterSn}
+            </foreach>
+        </if>
+    </select>
+    <select id="getPcListSwitchMonth" resultType="java.math.BigDecimal">
+        SELECT  SUM(meter) AS meter
+        FROM
+        (
+        SELECT s_month,meter FROM pc_meter_months WHERE id = 0
+        <foreach collection="list" item="item" index="index">
+            union all
+            SELECT s_month,meter
+            FROM pc_meter_months
+            WHERE s_year = #{year}
+            AND s_month = #{month}
+            AND switch_sn = #{item.swtichSn}
+            AND project_id = #{projectId}
+        </foreach>
+        ) a
+    </select>
+    <select id="queryNowMonthData" resultType="cn.meiot.entity.bo.MeterStatisticalBo">
+
+        SELECT s_month,SUM(meter) FROM
+        (
+             SELECT s_month ,meter  from pc_meter_months where id = 0
+            <foreach collection="list" item="item" index="index">
+                union all
+                SELECT s_month,meter
+                FROM pc_meter_months
+                WHERE s_year = #{pcDataVo.year}
+                AND s_month = #{pcDataVo.month}
+                and serial_number = #{item.serialNumber}
+                AND switch_sn = #{item.masterSn}
+                AND project_id = #{pcDataVo.projectId}
+            </foreach>
+        ) a
+
+
+    </select>
+
+</mapper>

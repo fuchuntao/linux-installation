@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.EnterpriseAlarmDao">
+
+    <resultMap type="cn.meiot.entity.EnterpriseAlarm" id="EnterpriseAlarmMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="alarmId" column="alarm_id" jdbcType="INTEGER"/>
+        <result property="isRead" column="is_read" jdbcType="OTHER"/>
+        <result property="deviceAlias" column="device_alias" jdbcType="VARCHAR"/>
+        <result property="switchAlias" column="switch_alias" jdbcType="VARCHAR"/>
+        <result property="msgContent" column="msg_content" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EnterpriseAlarmMap">
+        select
+          id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.enterprise_alarm
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EnterpriseAlarmMap">
+        select
+          id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.enterprise_alarm
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EnterpriseAlarmMap">
+        select
+        id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.enterprise_alarm
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="alarmId != null">
+                and alarm_id = #{alarmId}
+            </if>
+            <if test="isRead != null">
+                and is_read = #{isRead}
+            </if>
+            <if test="deviceAlias != null and deviceAlias != ''">
+                and device_alias = #{deviceAlias}
+            </if>
+            <if test="switchAlias != null and switchAlias != ''">
+                and switch_alias = #{switchAlias}
+            </if>
+            <if test="msgContent != null and msgContent != ''">
+                and msg_content = #{msgContent}
+            </if>
+        </where>
+    </select>
+    <select id="selectByAlarmId" resultType="cn.meiot.entity.EnterpriseAlarm">
+        select
+        id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from enterprise_alarm
+        where alarm_id=#{alarmId}
+    </select>
+    <select id="selectIsReadNumber" resultType="java.lang.Integer">
+        select count(1)
+        from enterprise_alarm em left join enterprise_user_fault_msg_alarm ea on em.alarm_id=ea.id
+        where ea.type=#{type} and ea.project_id = #{projectId} and em.user_id=#{userId} and em.is_read=0
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into meiot_msg.enterprise_alarm(user_id, alarm_id, is_read, device_alias, switch_alias, msg_content)
+        values (#{userId}, #{alarmId}, #{isRead}, #{deviceAlias}, #{switchAlias}, #{msgContent})
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update meiot_msg.enterprise_alarm
+        <set>
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="alarmId != null">
+                alarm_id = #{alarmId},
+            </if>
+            <if test="isRead != null">
+                is_read = #{isRead},
+            </if>
+            <if test="deviceAlias != null and deviceAlias != ''">
+                device_alias = #{deviceAlias},
+            </if>
+            <if test="switchAlias != null and switchAlias != ''">
+                switch_alias = #{switchAlias},
+            </if>
+            <if test="msgContent != null and msgContent != ''">
+                msg_content = #{msgContent},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updateByFaultMessageId">
+        update meiot_msg.enterprise_alarm ea,meiot_msg.enterprise_user_fault_msg_alarm msg
+        <set>
+            <if test="userAlarm.userId != null">
+                ea.user_id = #{userAlarm.userId},
+            </if>
+            <if test="userAlarm.alarmId != null">
+                ea.alarm_id = #{userAlarm.alarmId},
+            </if>
+            <if test="userAlarm.isRead != null">
+                ea.is_read = #{userAlarm.isRead},
+            </if>
+            <if test="userAlarm.deviceAlias != null and userAlarm.deviceAlias != ''">
+                ea.device_alias = #{userAlarm.deviceAlias},
+            </if>
+            <if test="userAlarm.switchAlias != null and userAlarm.switchAlias != ''">
+                ea.switch_alias = #{userAlarm.switchAlias},
+            </if>
+            <if test="userAlarm.msgContent != null and userAlarm.msgContent != ''">
+                ea.msg_content = #{userAlarm.msgContent}
+            </if>
+        </set>
+        where ea.alarm_id = msg.id and ea.user_id= #{userId} and msg.type=#{type} and msg.id in
+        <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from meiot_msg.enterprise_alarm where id = #{id}
+    </delete>
+
+</mapper>

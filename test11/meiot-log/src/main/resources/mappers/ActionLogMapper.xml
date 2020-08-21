@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.ActionLogMapper">
+
+	<!-- 通用查询映射结果 -->
+ 	<resultMap id="BaseResultMap" type="cn.meiot.entity.ActionLog">
+		<id column="id" property="id" />
+		<result column="user_id" property="userId" />
+		<result column="username" property="username" />
+		<result column="action_model" property="actionModel" />
+		<result column="url" property="url" />
+		<result column="content" property="content" />
+		<result column="param" property="param" />
+		<result column="ip" property="ip" />
+		<result column="useragent" property="useragent" />
+		<result column="create_time" property="createTime" />
+		<result column="type" property="type"/>
+		<result column="main_user_id" property="mainUserId"/>
+		<result column="name" property="name"/>
+	</resultMap>
+
+	<!-- 通用查询结果列 -->
+	<sql id="Base_Column_List">
+		id, user_id, username, action_model, url, content, param,
+		ip, useragent,create_time,`type`,main_user_id,`name`
+	</sql>
+	<sql id="Base_Column_List1">
+		id, user_id, username, action_model, url, content,
+		ip, useragent,create_time,`type`,main_user_id,`name`
+	</sql>
+
+
+
+	<!-- 添加日志信息 -->
+	<insert id="insertLog">
+		INSERT INTO action_log (
+			user_id,
+			username,
+			action_model,
+			url,
+			content,
+			param,
+			ip,
+			useragent,
+			`type`,
+			main_user_id,
+			`name`
+			)
+		VALUES
+		(
+		#{userId}, #{username}, #{actionModel}, #{url}, #{content},
+		#{param},
+		#{ip}, #{useragent},#{type},#{mainUserId},#{name})
+	</insert>
+
+	<select id="getLogList" resultMap="BaseResultMap">
+		SELECT
+		<include refid="Base_Column_List1"/>
+		FROM
+		`action_log`
+		INNER JOIN
+		( SELECT
+		id
+		FROM `action_log` WHERE
+		main_user_id = #{userId}
+
+		<if test="null != account and '' != account">
+			AND username LIKE '%' #{account} '%'
+		</if>
+		<if test="null != startTime and '' != startTime">
+			AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}
+		</if>
+		<if test="null != endTime and '' != endTime">
+			AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+
+		ORDER BY id DESC LIMIT #{currentPage},#{pageSize}
+		)
+		AS a USING ( id )
+
+		<!--SELECT-->
+		<!--<include refid="Base_Column_List1"/>-->
+		<!--FROM action_log-->
+		<!--<where>-->
+			<!--main_user_id = #{userId}-->
+			<!--<if test="null != account and '' != account">-->
+			<!--AND	username LIKE '%' #{account} '%'-->
+			<!--</if>-->
+			<!--<if test="null != startTime and '' != startTime">-->
+				<!--AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}-->
+			<!--</if>-->
+			<!--<if test="null != endTime and '' != endTime">-->
+				<!--AND	DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}-->
+			<!--</if>-->
+		<!--</where>-->
+		<!--ORDER BY create_time DESC LIMIT #{currentPage},#{pageSize}-->
+	</select>
+
+	<select id="getLogListTotal" resultType="java.lang.Integer">
+		SELECT
+		COUNT(1)
+		FROM action_log
+		<where>
+			main_user_id = #{userId}
+			<if test="null != account and '' != account">
+				AND	username LIKE '%' #{account} '%'
+			</if>
+			<if test="null != startTime and '' != startTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}
+			</if>
+			<if test="null != endTime and '' != endTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}
+			</if>
+		</where>
+	</select>
+	<select id="getLogListAdmin" resultMap="BaseResultMap">
+		SELECT
+		<include refid="Base_Column_List1"/>
+		FROM
+		`action_log`
+		INNER JOIN
+		( SELECT
+			id
+		  FROM `action_log` WHERE
+			`type` = #{type}
+
+			<if test="null != account and '' != account">
+				AND username LIKE '%' #{account} '%'
+			</if>
+			<if test="null != startTime and '' != startTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}
+			</if>
+			<if test="null != endTime and '' != endTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}
+			</if>
+
+		 ORDER BY id DESC LIMIT #{currentPage},#{pageSize}
+		)
+		   AS a USING ( id )
+	</select>
+
+
+	<!--SELECT-->
+	<!--a.*-->
+	<!--FROM action_log a-->
+	<!--JOIN (-->
+	<!--SELECT id FROM action_log-->
+	<!--<where>-->
+		<!--`type` = #{type}-->
+		<!--<if test="null != account and '' != account">-->
+			<!--AND username LIKE '%' #{account} '%'-->
+		<!--</if>-->
+		<!--<if test="null != startTime and '' != startTime">-->
+			<!--AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}-->
+		<!--</if>-->
+		<!--<if test="null != endTime and '' != endTime">-->
+			<!--AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}-->
+		<!--</if>-->
+	<!--</where>-->
+	<!--ORDER BY id DESC  LIMIT #{currentPage},#{pageSize}) b ON a.id = b.id-->
+    <!--SELECT-->
+    <!--<include refid="Base_Column_List"/>-->
+    <!--FROM action_log-->
+    <!--<where>-->
+    <!--`type` = #{type}-->
+    <!--<if test="null != account and '' != account">-->
+    <!--AND username LIKE '%' #{account} '%'-->
+    <!--</if>-->
+    <!--<if test="null != startTime and '' != startTime">-->
+    <!--AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}-->
+    <!--</if>-->
+    <!--<if test="null != endTime and '' != endTime">-->
+    <!--AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}-->
+    <!--</if>-->
+    <!--</where>-->
+    <!--ORDER BY create_time DESC LIMIT #{currentPage},#{pageSize}-->
+
+
+	<select id="getLogListAdminTotal" resultType="java.lang.Integer">
+		SELECT
+		COUNT(1)
+		FROM action_log WHERE
+			`type` = #{type}
+			<if test="null != account and '' != account">
+				AND username LIKE '%' #{account} '%'
+			</if>
+			<if test="null != startTime and '' != startTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{startTime}
+			</if>
+			<if test="null != endTime and '' != endTime">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') &lt;= #{endTime}
+			</if>
+	</select>
+
+
+
+</mapper>

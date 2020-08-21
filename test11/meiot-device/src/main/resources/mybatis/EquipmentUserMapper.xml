@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.EquipmentUserMapper">
+
+	
+	<select id="queryUserIdAndSerialumber" resultType="Integer">
+		SELECT
+			equipment_user.id
+		FROM
+			equipment_user
+		WHERE
+			equipment_user.user_id = #{userId}
+		<if test="serialNumber != null and serialNumber != '' ">
+		AND	
+			equipment_user.serial_number = #{serialNumber}
+		</if>
+		AND
+			user_status = 1
+		LIMIT
+			1
+	</select>
+	
+	<update id="bindEquipmentUser">
+		UPDATE equipment_user SET user_status = 0 WHERE equipment_user.id = (SELECT
+			equipment_user.id
+		FROM
+			equipment_user
+		WHERE
+			equipment_user.user_id = #{userId}
+		AND	
+			equipment_user.serial_number = #{serialNumber}
+		AND
+			equipment_user.user_status = 0
+		)
+	</update>
+	
+	<select id = "querySwitchByUserId" resultType="Integer">
+		SELECT
+			IFNULL(equipment_user.is_switch,0)
+		FROM
+			`equipment_user`
+		WHERE
+			equipment_user.user_id = #{userId} 
+		AND equipment_user.serial_number =#{serialNumber}
+		AND
+			equipment_user.user_status = 1
+	</select>
+	
+	<select id="queryEquipmentUser" resultType="java.util.HashMap">
+		SELECT
+			equipment_user.serial_number AS serialNumber,
+			IFNULL(equipment_user.name,'') AS name,
+			equipment.model,
+			equipment_user.is_default AS isDefault,
+			equipment.switch_count AS switchCount,
+		  	equipment.examination_time AS examinationTime,
+		  	equipment.examination_status AS examinationStatus
+		FROM
+			`equipment_user`
+		JOIN
+			equipment
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment_user.user_id = #{userId}
+		AND
+			equipment.equipment_status = 1
+		AND
+			equipment_user.user_status = 1
+		GROUP BY
+			equipment_user.id
+		ORDER BY
+			equipment_user.is_default DESC
+	</select>
+	
+	<update id="updateName" >
+		UPDATE equipment_user SET name = #{name} WHERE serial_number =#{serialNumber} AND user_id = #{userId} AND user_status = 1
+	</update>
+	
+	<update id="updateSerialNumberByStatus">
+		UPDATE equipment_user SET is_switch = #{status} WHERE serial_number =#{serialNumber} AND user_id = #{userId}
+	</update>
+	
+	<select id="getRtuserIdBySerialNumber" resultType="String">
+		SELECT
+			user_id
+		FROM
+			equipment_user
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			user_status = 1
+		ORDER BY
+			is_primary DESC
+	</select>
+	
+	<select id="queryEqBySerialNumberAnduserId" resultType="cn.meiot.entity.db.EquipmentUser">
+		SELECT
+			id,
+			is_primary AS isPrimary,
+			user_id AS userId,
+			name,
+			user_status AS userStatus
+		FROM
+			equipment_user
+		WHERE
+			equipment_user.serial_number = #{serialNumber}
+		AND
+			user_status != 2
+	</select>
+	
+	<select id="getRtuserIdByUserId" resultType="Long">
+		SELECT
+			equipment_user.user_id
+		FROM
+			equipment_user
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			is_primary = 1
+		
+	</select>
+	<select id="getSubUserIdByserialNumber" resultType="String">
+		SELECT
+			equipment_user.user_id
+		FROM
+			equipment_user
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			is_primary = 0
+	</select>
+	
+	<select id="queryEquipment" resultType="java.util.HashMap">
+		SELECT
+			equipment_user.serial_number AS serialNumber,
+			equipment_user. NAME AS name,
+			equipment.model,
+			equipment_user.is_default AS isDefault,
+			IFNULL(equipment.examination_time,'') AS examinationTime,
+			equipment.examination_status AS examinationStatus,
+			IFNULL(equipment.version,'') AS version,
+			equipment.voltage
+		FROM
+			`equipment_user`
+		JOIN equipment ON equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment.serial_number = #{serialNumber}
+		AND
+			equipment_user.user_id = #{userId}
+		AND
+			user_status = 1
+	</select>
+	
+	<update id="unDefault">
+		UPDATE equipment_user SET equipment_user.is_default = #{isDefault} 
+		WHERE 
+		equipment_user.user_id = #{userId}
+		<if test="serialNumber!= null">
+		AND 
+		equipment_user.serial_number = #{serialNumber} 
+		</if>
+		AND
+		equipment_user.user_status = 1;
+	</update>
+	
+	<delete id="deleteBySerialNumber">
+		DELETE FROM equipment_user WHERE equipment_user.serial_number = #{serialNumber}
+	</delete>
+	
+	<select id="queryUserName" resultType="java.util.HashMap">
+		SELECT
+			id,
+			IFNULL(user_name, '') AS userName,
+			IFNULL(equipment_user.name, '') AS name,
+			user_id AS userId,
+			is_default AS isDefault
+		FROM
+			equipment_user
+		WHERE
+			equipment_user.is_primary = 0
+		AND equipment_user.user_status = 1
+		AND	 equipment_user.serial_number = #{serialNumber}	
+	</select>
+	
+	<select id="queryMain" resultType="java.util.HashMap">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			t1.id,
+			IFNULL(t1.NAME,'') AS name,
+			equipment.model,
+			count(equipment_user.id) AS userCount
+		FROM
+			(SELECT serial_number,id,NAME FROM equipment_user WHERE equipment_user.is_primary = 1 AND user_id = #{userId} ) AS t1
+		JOIN
+			equipment
+		ON
+			t1.serial_number = equipment.serial_number
+		LEFT JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		AND
+			equipment_user.user_status = 1
+		AND
+			equipment_user.is_primary = 0
+		GROUP BY
+			serialNumber
+	</select>
+	
+	<select id="queryIsMainUserById" resultType="Long">
+		SELECT
+			t2.user_id
+		FROM
+			equipment_user as t1
+		JOIN
+			equipment_user as t2
+		ON
+			t1.serial_number = t2.serial_number
+		WHERE
+			t1.id = #{id}
+		AND
+			t2.is_primary = 1
+	</select>
+	
+	<update id="updateEquipmentUser" parameterType="cn.meiot.entity.db.EquipmentUser">
+        UPDATE equipment_user
+        <set>
+              <if test ='null != serialNumber'>serial_number = #{serialNumber},</if>
+              <if test ='null != userId'>user_id = #{userId},</if>
+              <if test ='null != name'>name = #{name},</if>
+              <if test ='null != userStatus'>user_status = #{userStatus},</if>
+              <if test ='null != isDefault'>is_default = #{isDefault},</if>
+              <if test ='null != isSwitch'>is_switch = #{isSwitch},</if>
+              <if test ='null != userName'>user_name = #{userName}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <select id="queryById" resultType="cn.meiot.entity.db.EquipmentUser">
+    	SELECT
+			t2.id
+		FROM
+			`equipment_user` AS t1
+		JOIN
+			equipment_user AS t2
+		ON
+			t1.user_id = t2.user_id
+		WHERE
+			t1.id = #{id}
+		AND
+			t2.user_status = 1
+		ORDER BY id  DESC
+		LIMIT 1
+    </select>
+    
+    <select id="queryIsCountByDefault" resultType="Long">
+    	SELECT
+			count(1)
+		FROM
+			`equipment_user`
+		WHERE
+			equipment_user.user_id = #{userId}
+		 AND
+			equipment_user.is_default = 1
+		AND
+			equipment_user.id != #{id}
+		AND
+			equipment_user.user_status = 1
+    </select>
+    
+    <select id="queryEquipmentByUser" resultType="cn.meiot.entity.db.EquipmentUser">
+    	SELECT
+			equipment_user.user_id AS userId,
+			equipment_user.user_status AS userStatus
+		FROM
+			equipment_user
+		WHERE
+			user_id = #{userId}
+		AND
+			serial_number = #{serialNumber}
+		AND
+			user_status != 2
+		LIMIT 1
+    </select>
+    
+    <select id="queryUser" resultType="cn.meiot.entity.dto.pc.equipmentUser.EquipmentUserResp">
+    	<include refid="EquipmentJoinEquipment_user"/>
+		WHERE
+			equipment_user.project_id = 0
+		AND
+			equipment_user.is_primary = 1
+<!-- 		<if test=" serialNumber != null and serialNumber != '' ">
+        
+        </if> -->
+        <if test=" serialNumber != null and serialNumber != '' ">
+        AND(
+        	equipment_user.name LIKE CONCAT('%',#{serialNumber},'%')
+        OR	
+        	equipment_user.serial_number LIKE CONCAT('%',#{serialNumber},'%')
+        	)
+        </if>
+		GROUP BY
+			equipment.serial_number
+		ORDER BY
+			equipment_user.id
+    </select>
+    
+     <select id="queryUserExcel" resultType="cn.meiot.entity.excel.UserExcel">
+    	SELECT
+			equipment.serial_number AS serialNumber,
+			equipment.switch_count AS switchCount,
+			equipment_user.user_id AS userId,
+			equipment_user.name AS serialName
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment_user.project_id = 0
+		AND
+			equipment_user.is_primary = 1
+		GROUP BY
+			equipment.serial_number
+		ORDER BY
+			equipment_user.id
+    </select>
+    
+    <select id="queryProjectExcel" resultType="cn.meiot.entity.excel.ProjectExcel">
+    	SELECT
+			equipment.serial_number AS serialNumber,
+			equipment.switch_count AS switchCount,
+			equipment_user.user_id AS userId,
+			equipment_user.name AS serialName,
+			project_id AS projectId
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment_user.project_id != 0
+		AND
+			equipment_user.is_primary = 1
+		GROUP BY
+			equipment.serial_number
+		ORDER BY
+			equipment_user.id
+    </select>
+    
+    <select id="queryProject" resultType="cn.meiot.entity.dto.pc.equipmentUser.EquipmentUserResp">
+    	<include refid="EquipmentJoinEquipment_user"/>
+		WHERE
+			equipment_user.project_id != 0
+		<if test=" name != null and name != '' ">
+        AND
+        (
+        	equipment_user.name LIKE CONCAT('%',#{name},'%')
+        OR	
+        	equipment_user.serial_number LIKE CONCAT('%',#{name},'%')
+        	)
+        </if>
+		GROUP BY
+			equipment.serial_number
+		ORDER BY
+			equipment_user.user_id
+    </select>
+    
+    
+    
+    <sql id="EquipmentJoinEquipment_user">
+    	SELECT
+			equipment.serial_number AS serialNumber,
+			equipment.model,
+			equipment.switch_count AS switchCount,
+			equipment_user.user_id AS userId,
+			equipment_user.name AS serialName,
+			equipment_user.project_id AS projectId
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+    </sql>
+    
+    <delete id="deleteBySerialNumberS">
+    	DELETE FROM equipment_user WHERE serial_number IN
+    	<foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+		  #{id}
+		</foreach>
+    </delete>
+    
+    <insert id="pcInsert">
+    	INSERT INTO equipment_user (
+			serial_number,
+			user_id,
+			name,
+			user_status,
+			is_primary,
+			project_id
+		)
+		VALUES
+			(
+				#{serialNumber},
+				#{userId},
+				#{name},
+				#{userStatus},
+				#{isPrimary},
+				#{projectId}
+			);
+    </insert>
+    
+    <select id="getSerialNumberByName" resultType="String">
+    	SELECT equipment_user.serial_number FROM `equipment_user` WHERE name like CONCAT('%',#{name},'%') GROUP BY equipment_user.serial_number
+    </select>
+    
+    <select id="querySerialByProjectId" resultType="java.util.HashMap">
+    	SELECT
+			equipment.building_id AS buildingId,
+			equipment.serial_number AS serialNumber,
+			equipment_user.name
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		<if test="serialNumber != null and serialNumber != ''">
+		AND
+			equipment.serial_number = #{serialNumber}
+		</if>
+		<if test="buildingId != null ">
+		AND
+			equipment.building_id = #{buildingId}
+		</if>
+		ORDER BY
+			equipment_user.id DESC
+    </select>
+    
+    <select id="getSerialNUmbersByProjectId" resultType="String">
+    	SELECT
+			equipment.serial_number
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		ORDER BY
+			equipment_user.id DESC
+    </select>
+    
+    <select id="queryDeviceTotal" resultType="Integer">
+		SELECT
+			COUNT(DISTINCT(equipment_user.serial_number))
+		FROM
+			equipment_user
+		<if test="projectId != null">
+		WHERE
+			equipment_user.project_id = #{projectId}
+	    </if>
+    </select>
+    <select id="querySerialByProject" resultType="java.lang.String">
+		SELECT serial_number FROM `equipment_user` WHERE project_id = #{projectId}
+	</select>
+	<select id="querySerialByUserId" resultType="java.lang.String">
+		SELECT serial_number FROM equipment_user WHERE equipment_user.user_id = #{userId} AND equipment_user.user_status = 1
+	</select>
+
+	<select id="querySerialAndMasterByProjectId" resultType="java.lang.String">
+		SELECT serial_number FROM equipment_user WHERE equipment_user.project_id = #{projectId}
+	</select>
+
+	<select id="queryIsMainUserByIdAndSerial" resultType="java.lang.Long">
+		SELECT
+			t2.user_id
+		FROM
+			equipment_user as t1
+		JOIN
+			equipment_user as t2
+		ON
+			t1.serial_number = t2.serial_number
+		WHERE
+			t1.serialNumber = #{serialNumber}
+		AND
+			t1.user_id = #{userId}
+		AND
+			t2.is_primary = 1
+	</select>
+    <select id="queryDefaultSerial" resultType="java.util.Map">
+		SELECT
+			equipment.building_id AS buildingId,
+			equipment_user.`name`,
+			equipment.switch_count AS switchCount
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		WHERE
+			equipment.serial_number = #{serialNumber}
+		AND
+			project_id = #{projectId}
+		LIMIT 1
+	</select>
+
+    <select id="querySerialNumberByProjectId" resultType="java.lang.String">
+		SELECT
+			serial_number
+		FROM
+			equipment_user
+		WHERE
+			project_id = #{projectId}
+	</select>
+
+	<select id="queryEquipmentUserByProjectId" resultType="java.lang.Long">
+		SELECT id FROM equipment_user WHERE project_id = #{projectId}
+	</select>
+    <select id="querySerialAndBuildingId" resultType="cn.meiot.entity.dto.pc.examination.SerialDto">
+		SELECT
+			equipment.building_id AS buildingId,
+			equipment_user.`name`,
+			equipment.serial_number AS serialNumber
+		FROM
+			equipment
+		JOIN equipment_user USING(serial_number)
+		WHERE
+			equipment_user.project_id = #{projectId}
+	</select>
+	<select id="initSerialTotal" resultType="java.util.Map">
+		SELECT
+			equipment.building_id AS buildingId,
+			equipment_user.user_id AS userId,
+			equipment_user.project_id AS projectId
+		FROM
+			equipment
+		JOIN equipment_user USING (serial_number)
+		WHERE
+			equipment_user.project_id > 0
+	</select>
+	<select id="findBuildingIdAndName" resultType="java.util.Map">
+		SELECT
+		equipment.building_id AS buildingId,
+		equipment.serial_number AS serialNumber,
+		equipment_user.name,
+		equipment.loadmax
+		FROM
+			equipment
+		JOIN
+			equipment_user USING (serial_number)
+		WHERE
+			equipment.serial_number = #{serialNumber}
+		AND
+			equipment_user.project_id = #{projectId}
+		LIMIT 1
+	</select>
+    <select id="findAddressAndNameBySwitchSn" resultType="java.util.Map">
+		SELECT
+			equipment.building_id AS buildingId,
+			equipment.serial_number AS serialNumber,
+			equipment_user.name,
+			equipment.loadmax,
+			switch.switch_sn as switchSn,
+			switch.parent_index AS parentIndex,
+			switch_name.name AS switchName
+		FROM
+			`switch`
+		JOIN
+			equipment USING (serial_number)
+		JOIN
+			equipment_user USING (serial_number)
+		LEFT JOIN
+			switch_name USING (switch_sn)
+		WHERE
+			switch_sn = #{switchSn}
+		AND
+			equipment_user.project_id = #{projectId}
+		AND
+			equipment_user.user_id = #{userId}
+		LIMIT 1
+	</select>
+	<select id="selectIdBySerialNuber" resultType="java.lang.Long">
+		SELECT
+			id
+		FROM
+			`equipment_user`
+		WHERE
+			serial_number = #{serialNumebr}
+		AND
+			user_status != 2
+		LIMIT 1
+	</select>
+
+</mapper>

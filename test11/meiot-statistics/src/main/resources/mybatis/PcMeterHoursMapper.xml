@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.PcMeterHoursMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.PcMeterHours">
+        <id column="id" property="id" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="switch_index" property="switchIndex" />
+        <result column="switch_sn" property="switchSn" />
+        <result column="meter" property="meter" />
+        <result column="s_year" property="sYear" />
+        <result column="s_month" property="sMonth" />
+        <result column="s_day" property="sDay" />
+        <result column="s_time" property="sTime" />
+        <result column="create_time" property="createTime" />
+        <result column="user_id" property="userId" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, serial_number, switch_index, switch_sn, meter, s_year, s_month, s_day, s_time, create_time, user_id, update_time
+    </sql>
+    <select id="getLastInfoByConditionPc" resultType="cn.meiot.entity.PcMeterHours">
+        select
+        id, serial_number, switch_index, switch_sn,sum(meter) as  meter, s_time, create_time,user_id,s_year,s_month,s_day,update_time
+        from pc_meter_hours where
+        serial_number = #{map.serial_number}
+        and switch_sn = #{map.switch_sn}
+        and s_year = #{map.s_year}
+        and s_month = #{map.s_month}
+        and s_day = #{map.s_day}
+        and s_time  <![CDATA[<= ]]> #{map.s_time}
+        order by create_time desc limit 1
+    </select>
+    <select id="getCountByConditionPc" resultType="java.lang.Long">
+        select
+         id
+         from pc_meter_hours where
+            serial_number = #{map.serial_number}
+            and switch_sn = #{map.switch_sn}
+            and s_year = #{map.s_year}
+            and s_month = #{map.s_month}
+            and s_day = #{map.s_day}
+            and s_time = #{map.s_time}
+            and project_id = #{map.project_id}
+    </select>
+
+    <select id="selectMeterListBySerialNumberPc" resultType="cn.meiot.entity.vo.AppMeterMonthsVo">
+        SELECT
+            user_id,serial_number, switch_index, switch_sn,  s_year, s_month, s_day, SUM(meter) AS meter, project_id AS projectId
+        FROM
+            `pc_meter_hours`
+        WHERE
+            s_year = #{appMeterVo.year}
+
+            AND s_month = #{appMeterVo.month}
+
+            AND s_day = #{appMeterVo.day}
+        GROUP BY
+            serial_number,switch_sn,project_id
+    </select>
+    <select id="getDayMeterByProjectId" resultType="java.math.BigDecimal">
+        SELECT SUM(a.meter) AS value FROM
+        (
+        SELECT s_time,meter FROM pc_meter_hours WHERE id = 0
+        <foreach collection="list" item="item" index="index">
+            UNION all
+            SELECT s_time,meter
+            FROM pc_meter_hours
+            WHERE serial_number = #{item.serialNumber}
+            AND switch_sn = #{item.masterSn}
+            AND s_month = #{month}
+            AND s_day = #{day}
+            AND project_id = #{projectId}
+        </foreach>
+        ) a
+    </select>
+    <select id="getTotalMeterCreateTime" resultType="java.lang.Long">
+        SELECT unix_timestamp(create_time) * 1000 AS createTime
+        FROM pc_meter_hours
+        WHERE serial_number=#{serialNumber}
+        AND user_id =#{userId}
+        AND project_id = #{projectId}
+        ORDER BY create_time
+        DESC LIMIT 1
+    </select>
+
+</mapper>

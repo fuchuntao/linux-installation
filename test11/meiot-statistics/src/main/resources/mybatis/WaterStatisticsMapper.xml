@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.WaterStatisticsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.WaterStatistics">
+        <id column="id" property="id" />
+    <result column="meterid" property="meterid" />
+    <result column="deviceid" property="deviceid" />
+    <result column="readtime" property="readtime" />
+    <result column="readcount" property="readcount" />
+    <result column="unit" property="unit" />
+    <result column="checked" property="checked" />
+    <result column="checker" property="checker" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        record_id,
+        meterid,
+        deviceid,
+        readtime,
+        readcount,
+        unit,
+        checked,
+        checker,
+        user_id,
+        project_id,
+        id
+    </sql>
+
+    <update id="saveWaterMeter">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE water_statistics
+            <set>
+                <if test="item.ccid != null">
+                    ccid = #{item.ccid},
+                </if>
+                <if test="item.meterid != null">
+                    meterid = #{item.meterid},
+                </if>
+
+                <if test="item.deviceid != null">
+                    deviceid =#{item.deviceid},
+                </if>
+
+                <if test="item.readtime != null">
+                    readtime = #{item.readtime},
+                </if>
+
+                <if test="item.readcount != null">
+                    readcount = #{item.readcount},
+                </if>
+
+                <if test="item.unit != null">
+                    unit = #{item.unit},
+                </if>
+
+                <if test="item.checked != null">
+                    checked = #{item.checked},
+                </if>
+
+                <if test="item.checker != null">
+                    checker = #{item.checker}
+                </if>
+            </set>
+            <where>
+                id = #{item.id}
+            </where>
+        </foreach>
+    </update>
+    <select id="queryWaterMeter" resultType="cn.meiot.entity.vo.WaterStatisticsVo">
+        SELECT
+        meterid,
+        deviceid,
+        readtime,
+        readcount , unit, checked, checker
+        FROM `water_statistics`
+        <where>
+            <if test="waterStatisticsDto.startTime != null and waterStatisticsDto.endTime != '' ">
+                readtime between #{waterStatisticsDto.startTime} AND #{waterStatisticsDto.endTime}
+            </if>
+            <if test="waterStatisticsDto.meterid != null and waterStatisticsDto.meterid != '' ">
+                AND meterid LIKE CONCAT('%',#{waterStatisticsDto.meterid},'%')
+            </if>
+            <if test="waterStatisticsDto.projectId != null">
+                AND project_id = #{waterStatisticsDto.projectId}
+            </if>
+            <if test="waterStatisticsDto.userId != null">
+                AND user_id = #{waterStatisticsDto.userId}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="queryWaterMeterId" resultType="java.lang.Long">
+        SELECT id
+        FROM water_statistics
+        <where>
+            <if test="waterStatistics.meterid != null and waterStatistics.meterid != '' ">
+                meterid = #{waterStatistics.meterid}
+            </if>
+            <if test="waterStatistics.projectId != null and waterStatistics.projectId != 0">
+                AND project_id = #{waterStatistics.projectId}
+            </if>
+            <if test="waterStatistics.userId != null">
+                AND user_id = #{waterStatistics.userId}
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+    <select id="queryWaterMeterBySetId" resultType="java.lang.Long">
+        SELECT id
+        FROM water_statistics
+        GROUP BY id
+    </select>
+
+
+    <select id="selectWaterMeterList" resultType="cn.meiot.entity.WaterStatistics">
+        SELECT <include refid="Base_Column_List"/>
+        from
+        water_statistics
+        <where>
+            <if test="waterStatisticsDto.startTime != null and waterStatisticsDto.endTime != '' ">
+                readtime between #{waterStatisticsDto.startTime} AND #{waterStatisticsDto.endTime}
+            </if>
+            <if test="waterStatisticsDto.meterid != null and waterStatisticsDto.meterid != '' ">
+                AND meterid LIKE CONCAT('%',#{waterStatisticsDto.meterid},'%')
+            </if>
+            <if test="waterStatisticsDto.projectId != null">
+                AND project_id = #{waterStatisticsDto.projectId}
+            </if>
+        </where>
+        ORDER BY
+        readtime
+    </select>
+
+
+    <select id="selectWater" resultType="cn.meiot.entity.WaterStatistics">
+        SELECT <include refid="Base_Column_List"/>
+        FROM `water_statistics`
+        <where>
+            <if test="type == 1">
+                readcount IS NOT NULL
+            </if>
+            <if test="waterStatisticsDto.startTime != null">
+                AND readtime &lt; #{waterStatisticsDto.startTime}
+            </if>
+            <if test="waterStatisticsDto.meterid != null">
+                AND meterid = #{waterStatisticsDto.meterid}
+            </if>
+            <if test="waterStatisticsDto.userId != null">
+                AND user_id = #{waterStatisticsDto.userId}
+            </if>
+            <if test="waterStatisticsDto.projectId != null">
+                AND project_id = #{waterStatisticsDto.projectId}
+            </if>
+        </where>
+        ORDER BY
+        readtime DESC
+        LIMIT 1
+    </select>
+
+</mapper>

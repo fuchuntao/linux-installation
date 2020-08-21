@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.EquipmentMapper">
+	
+	<select id="querySerialNumber" resultType="cn.meiot.entity.dto.EquipmentRespDto">
+		SELECT
+			equipment.model,
+			equipment.serial_number AS serialNumber,
+			equipment.voltage,
+			equipment.model,
+			equipment.building_id AS buildingId
+		FROM
+			equipment 
+		WHERE
+			equipment.serial_number = #{serialNumber}
+	</select>
+	
+	<update id="updateEquipmentStatus">
+		UPDATE equipment SET equipment_status = #{status} WHERE serial_number =#{serialNumber} AND equipment_status != 1
+	</update>
+	
+	<select id="queryExamination" resultType="cn.meiot.entity.dto.TimingExamination">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			equipment.examination_time AS time,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		WHERE
+			equipment.examination_status = 1
+		AND
+			switch.parent_index = 0
+		AND
+			equipment.agreement_version = 1
+		AND
+			equipment.examination_time = #{time}
+	</select>
+
+	<select id="queryExaminationBySerial" resultType="cn.meiot.entity.dto.TimingExamination">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			equipment.examination_time AS time,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		WHERE
+			switch.parent_index = 0
+		AND
+			equipment.serial_number = #{serialNumber}
+	</select>
+
+	<select id="queryExamination2" resultType="cn.meiot.entity.dto.TimingExamination">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		WHERE
+			equipment.examination_status = 1
+		AND
+			equipment.agreement_version = 2
+		AND
+			equipment.examination_time = #{time}
+		ORDER BY switchIndex desc
+	</select>
+
+	<select id="queryExamination2BySerial" resultType="cn.meiot.entity.dto.TimingExamination">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		WHERE
+			equipment.serial_number = #{serialNumber}
+		ORDER BY switchIndex desc
+	</select>
+
+	<select id="queryBuilding" resultType="cn.meiot.entity.dto.pc.equipment.EquipmentPcDto">
+		SELECT
+			equipment_user.id,
+			equipment.serial_number AS serialNumber,
+			equipment_user.is_switch AS isSwitch,
+			equipment_user.name AS serialName,
+			equipment.loadmax
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		LEFT JOIN
+			role_equipment
+		ON
+			equipment.serial_number = role_equipment.serial_number
+		WHERE
+			equipment.building_id = #{id}
+		AND
+			equipment_user.user_id = #{userId}
+		<if test="listRole != null and listRole.size()>0">
+		AND
+			role_equipment.role_id in 
+		<foreach collection="listRole" item="id" index="index" open="(" close=")" separator=",">
+	 		 #{id}
+		</foreach>
+		</if>
+		GROUP BY equipment.serial_number
+	</select>
+    <select id="allExaminationByMonth" resultType="java.util.Map">
+		 SELECT
+			YEAR (a.create_time) AS year,
+			MONTH (a.create_time) AS month,
+			COUNT(a.serial_number) AS value
+		FROM
+		(
+		SELECT
+			equipment_user.create_time,
+			equipment_user.serial_number
+		FROM
+			equipment_user
+		GROUP BY
+			equipment_user.serial_number
+		) a
+		WHERE
+		 YEAR(a.create_time) = #{year}
+		AND
+		 MONTH(a.create_time) BETWEEN #{startMonth}
+		AND
+		 #{endMonth}
+		GROUP BY
+			year,
+			month
+	</select>
+    <select id="queryEquipmentBySwitch" resultType="java.util.Map">
+		SELECT
+			switch.serial_number AS serialNumber,
+			equipment.building_id AS buildingId,
+			equipment_user.`name`
+		FROM
+			(
+		SELECT
+			switch.serial_number
+		FROM
+			switch
+		WHERE
+			switch_sn = #{swtichSn}
+		) AS switch
+		JOIN
+			equipment
+		ON
+			switch.serial_number = equipment.serial_number
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		LIMIT
+		 1
+	</select>
+	<select id="queryCompanyBySerialNumber" resultType="java.lang.Integer">
+		SELECT company FROM equipment WHERE serial_number = #{serialNumber}
+	</select>
+    <select id="querySerialByBuildingIds" resultType="java.util.Map">
+		<foreach collection="list" item="id" index="index"  separator="UNION ALL">
+			SELECT
+				serial_number
+			FROM
+				equipment
+			WHERE
+				building_id = #{id}
+		</foreach>
+	</select>
+    <select id="findOneSerialByBuildingIds" resultType="java.lang.String">
+		SELECT
+			equipment.serial_number
+		FROM
+			equipment
+		WHERE
+			building_id IN
+		<foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+		LIMIT 1
+	</select>
+    <select id="queryAgreementVersion" resultType="java.lang.Integer">
+		SELECT agreement_version FROM equipment WHERE serial_number = #{serialNumber}
+	</select>
+    <select id="queryAgreementVersionBySwitchSn" resultType="java.lang.Integer">
+		SELECT
+			agreement_version
+		FROM
+			switch
+		JOIN
+			equipment
+		ON
+			switch.serial_number = equipment.serial_number
+		WHERE
+			switch_sn = #{switchSn}
+		LIMIT 1
+	</select>
+	<select id="listSerialByBuildingIds" resultType="java.lang.String">
+		<foreach collection="list" item="id" index="index"  separator="UNION ALL">
+			SELECT
+			serial_number
+			FROM
+			equipment
+			WHERE
+			building_id = #{id}
+		</foreach>
+	</select>
+
+
+	<update id="updateBuildingIdBySn" >
+		UPDATE
+			equipment
+		SET
+			equipment.building_id = #{buildingId}
+		WHERE
+			equipment.serial_number = #{serialNumber}
+	</update>
+	<update id="batchExamination">
+		UPDATE equipment
+		SET
+		 `examination_time` = #{examinationTime},
+		 `examination_status` = #{examinationStatus}
+		WHERE
+			`serial_number` IN
+		<foreach collection="serialList" item="serial" index="index" open="(" close=")" separator=",">
+			#{serial}
+		</foreach>
+	</update>
+</mapper>

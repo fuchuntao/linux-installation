@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.SwitchMapper">
+    <update id="updateSonSwitch">
+		UPDATE  switch SET parent_index = 1 WHERE serial_number = #{serialNumber}
+		<if test="switchSn">
+			AND switch_sn = #{switchSn}
+		</if>
+	</update>
+
+	<update id="updateMainSwitch">
+		UPDATE  switch SET parent_index = 0 WHERE serial_number = #{serialNumber} AND switch_sn = #{switchSn}
+	</update>
+
+    <select id="querySwitchIndexByNumber" resultType="cn.meiot.entity.dto.SwitchRespDto">
+		SELECT
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex,
+			switch.deleted,
+			switch.parent_index AS parentIndex,
+			switch_name.name,
+			switch_name.id,
+			switch_type.name AS typeName,
+			switch_type.id AS typeId
+		FROM
+			`switch`
+		LEFT JOIN
+			switch_name
+		ON
+			switch.switch_sn = switch_name.switch_sn
+		AND
+			switch_name.user_id = #{userId}
+		LEFT JOIN
+			switch_type
+		ON
+			switch_type.id = switch_name.switch_type
+		WHERE
+			switch.serial_number = #{serialNumber}
+		<if test="deleted != null">
+		AND
+			deleted = #{deleted}
+		</if>
+		GROUP BY switchSn 
+		ORDER BY switchIndex DESC<!-- in 
+		<foreach collection="switchS" item="switchcn"  open="(" separator="," close=")">
+			#{switchcn}
+		</foreach> -->
+	</select>
+	
+	<select id ="selectCountSerialNumber" resultType="cn.meiot.entity.db.Switch">
+		SELECT
+			switch_sn AS switchSn,
+			serial_number AS serialNumber,
+			switch_index AS switchIndex,
+			switch_model AS switchModel,
+			parent_index AS parentIndex,
+			timer_id AS timerId
+		FROM
+			switch
+		WHERE
+			serial_number = #{serialNumber}
+	</select>
+	
+	<select id="querySwitchBySerialNumber" resultType="cn.meiot.entity.dto.sw.SendSwitch">
+		SELECT
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			switch
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			switch.parent_index != 0
+		ORDER BY switchIndex desc
+	</select>
+
+	<select id="querySwitchAllBySerialNumber" resultType="cn.meiot.entity.dto.sw.SendSwitch">
+		SELECT
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			switch
+		WHERE
+			serial_number = #{serialNumber}
+	</select>
+
+	<select id="getMasterIndex" resultType="Integer">
+		SELECT
+			switch.switch_index
+		FROM
+			`switch`
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			switch.parent_index = 0
+	</select>
+	
+	<select id="getMasterSn" resultType="String">
+		SELECT
+			switch.switch_sn
+		FROM
+			`switch`
+		WHERE
+			serial_number = #{serialNumber}
+		AND
+			switch.parent_index = 0
+	</select>
+	
+	<select id="querySwitchByBuildingId" resultType="cn.meiot.entity.db.Switch">
+		SELECT
+			equipment.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex,
+			switch.switch_model AS switchModel
+		FROM
+			equipment
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		WHERE
+			equipment.building_id = #{id}
+	</select>
+	
+	<select id="querySwitch" resultType="cn.meiot.entity.db.SwitchName">
+		SELECT
+			switch.switch_sn AS switchSn
+		FROM
+			`switch`
+		WHERE
+			serial_number = #{serialNumber} 
+		ORDER BY 
+			switch_index DESC
+	</select>
+	
+	<select id="querySerialNumber" resultType="cn.meiot.entity.dto.sw.SendSwitch">
+		SELECT
+			switch.switch_sn AS switch_sn,
+			switch.switch_index AS switchIndex
+		FROM
+			switch
+		WHERE
+			switch.serial_number = #{serial_number}
+	</select>
+	
+<resultMap type="cn.meiot.entity.dto.pc.examination.SerialDto" id="serialMap">
+ 	<result property="serialNumber" column="serialNumber"/>
+	<result property="type" column="agreement_version"/>
+ 	<collection property="listSwitch" ofType="cn.meiot.entity.dto.pc.examination.SwitchDto">
+ 		<result property="switchSn" column="switchSn"/>
+		<result property="switchIndex" column="switchIndex"/>
+ 	</collection>
+</resultMap>
+	
+	<select id="querySerialNumberAndSwitch" resultMap="serialMap">
+		SELECT
+			equipment.agreement_version,
+			equipment_user.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment_user
+		JOIN
+			equipment
+		ON
+			equipment_user.serial_number = equipment.serial_number
+		JOIN
+			switch
+		ON
+			equipment_user.serial_number = switch.serial_number
+		LEFT JOIN
+			role_equipment
+		ON
+			equipment_user.serial_number = role_equipment.serial_number
+		WHERE
+			equipment_user.user_id = #{userId}
+		AND
+			equipment_user.project_id = #{projectId}
+		<if test="listRole != null and listRole.size()>0">
+		AND
+			role_equipment.role_id in 
+		<foreach collection="listRole" item="id" index="index" open="(" close=")" separator=",">
+	 		 #{id}
+		</foreach>
+		</if>
+		GROUP BY
+			equipment_user.serial_number,switch.switch_sn
+	</select>
+	
+	<select id="queryMasterIndexBySerialNUmber" resultType="cn.meiot.entity.vo.SerialNumberMasterVo">
+		SELECT
+			serial_number AS serialNumber,
+			switch_index AS masterIndex,
+			switch_sn AS masterSn
+		FROM
+			`switch`
+		WHERE
+			parent_index = 0
+		AND
+			switch.serial_number in
+		<foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</select>
+	
+	<select id="querySwitchJurisdiction" resultType="Long">
+		SELECT
+			equipment_user.id
+		FROM
+			equipment_user
+		JOIN
+			switch
+		ON
+			equipment_user.serial_number = switch.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		AND
+			equipment_user.user_id = #{userId}
+		AND
+			switch.switch_sn = #{switchSn}
+	</select>
+	
+	<select id="querySwitchBySerial" resultType="cn.meiot.entity.dto.pc.examination.SwitchDto">
+		SELECT
+			switch.switch_index AS switchIndex,
+			switch.switch_sn AS switchSn,
+			switch_name.`name` AS switchName
+		FROM
+			switch
+		JOIN
+			switch_name
+		ON
+			switch.switch_sn = switch_name.switch_sn
+		WHERE
+			switch.serial_number =#{serialNumber}
+		<!-- AND
+			switch_name.user_id = #{userId} -->
+	</select>
+	
+	<select id="querySwitchByBuilding" resultType="java.util.Map">
+		SELECT
+			equipment_user.name,
+			switch.switch_sn AS switchSn,
+			equipment_user.serial_number AS serialNumber
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		LEFT JOIN
+			switch
+		ON
+			equipment_user.serial_number = switch.serial_number
+		AND
+			switch.parent_index = 0
+		WHERE
+			equipment.building_id = #{buildingId}
+		AND
+			equipment_user.project_id = #{projectId}
+
+	</select>
+	<select id="querySwitchBySerialAndUserId" resultType="java.util.Map">
+		SELECT
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex,
+			switch_name.name,
+			switch_name.id
+		FROM
+			`switch`
+		JOIN
+			switch_name
+		ON
+			switch.switch_sn = switch_name.switch_sn
+		WHERE
+			switch.serial_number = #{serialNumber}
+		AND
+			switch_name.user_id = #{userId}
+		GROUP BY switchSn
+		ORDER BY switchIndex DESC
+	</select>
+
+	<select id="querySerialSwtichByProjectMode" resultMap="serialMap">
+		SELECT
+			equipment.agreement_version,
+			equipment_user.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch.switch_index AS switchIndex
+		FROM
+			equipment_user
+		JOIN
+			equipment
+		ON
+			equipment_user.serial_number = equipment.serial_number
+		JOIN
+			switch
+		ON
+			equipment_user.serial_number = switch.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		AND
+			switch_model = #{mode}
+		GROUP BY
+		equipment_user.serial_number,switch.switch_sn
+	</select>
+
+
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.WaterMeterMapper">
+
+
+    <select id="queryMeterIdAll" resultType="java.lang.String">
+        SELECT water_meter.meterid FROM water_meter
+    </select>
+    <select id="queryMeterIdByBuilding" resultType="java.lang.String">
+        SELECT
+          water_meter.meterid
+        FROM
+          `water_user`
+        INNER JOIN
+          water_meter
+        ON
+          water_user.meter_id = water_meter.meterid
+        WHERE
+          water_user.building_id IN
+        <foreach collection="collection" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="floorWaterExcel" resultType="cn.meiot.entity.excel.FloorWaterExcel">
+        SELECT
+            water_user.building_id AS buildingId,
+            water_user.`name`,
+            water_meter.cinfo,
+            water_meter.meterid,
+            water_meter.start_time AS startTime,
+	        water_meter.end_time AS endTime,
+            water_meter.bookname
+        FROM
+            water_user
+        JOIN
+            water_meter
+        ON
+            water_user.meter_id = water_meter.meterid
+        WHERE
+            water_user.project_id = #{projectId}
+    </select>
+    <select id="informationExcel" resultType="cn.meiot.entity.excel.InformationExcel">
+        SELECT
+			water_meter.cinfo,
+			water_meter.meterid,
+			water_meter.product,
+			water_meter.caliber,
+			water_meter.deviceid,
+			water_meter.battery,
+			water_meter.sim,
+			water_meter.basecount,
+			water_meter.`status`,
+			water_meter.lately_count AS latelyCount,
+			water_meter.sendmode,
+			water_meter.lately_time AS latelyTime,
+			water_meter.unit,
+			water_user.`name`,
+			water_user.building_id AS buildingId,
+			water_user.id
+		FROM
+		  water_user
+        JOIN
+            water_meter
+        ON
+            water_user.meter_id = water_meter.meterid
+        WHERE
+            water_user.project_id = #{projectId}
+    </select>
+    <select id="queryMeterIdAllByProjectId" resultType="cn.meiot.entity.db.WaterMeter">
+        SELECT meter_id AS meterId,id FROM `water_user` WHERE project_id = #{projectId}
+    </select>
+</mapper>

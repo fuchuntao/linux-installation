@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.EquipmentUserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.EquipmentUser">
+        <id column="serial_number" property="serialNumber" />
+        <result column="user_id" property="userId" />
+        <result column="name" property="name" />
+        <result column="user_status" property="userStatus" />
+        <result column="is_primary" property="isPrimary" />
+        <result column="is_default" property="isDefault" />
+        <result column="id" property="id" />
+        <result column="is_switch" property="isSwitch" />
+        <result column="user_name" property="userName" />
+        <result column="project_id" property="projectId" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <resultMap id="BaseResultDeviceVersionVo" type="cn.meiot.entity.vo.DeviceVersionVo">
+        <id column="serial_number" property="serialNumber" />
+        <result column="version" property="version"/>
+        <result column="euname" property="deviceName"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        serial_number, user_id, name, user_status, is_primary, is_default, id, is_switch, user_name, project_id, create_time
+    </sql>
+    <sql id="Base_DeviceVersionVo_List">
+        e.serial_number, eu.name AS euname, e.version
+    </sql>
+    <!--AND eu.user_status=1 AND e.equipment_status=1-->
+    <select id="selectDeviceVersionVo" resultMap="BaseResultDeviceVersionVo">
+        SELECT
+        <include refid="Base_DeviceVersionVo_List"/>
+        FROM equipment_user eu LEFT JOIN equipment e ON eu.serial_number=e.serial_number
+        <where>
+            eu.user_id=#{userId} AND eu.project_id=#{projectId}  AND eu.is_primary=1 AND eu.user_status=1
+            <if test="null != whiteLists">
+                AND e.serial_number IN(
+                  <foreach collection="whiteLists" item="white" separator=",">
+                      #{white.serialNumber}
+                  </foreach>
+                )
+            </if>
+        </where>
+    </select>
+
+    <!--AND e.version &lt; #{version}-->
+    <select id="selectUpgrade" resultMap="BaseResultDeviceVersionVo">
+        SELECT
+        <include refid="Base_DeviceVersionVo_List"/>
+        FROM equipment_user eu LEFT JOIN equipment e ON eu.serial_number=e.serial_number
+        WHERE eu.user_id=#{userId} AND eu.project_id=#{projectId}  AND eu.is_primary=1 AND eu.user_status=1
+        AND eu.serial_number=#{serialNumber}
+    </select>
+
+</mapper>

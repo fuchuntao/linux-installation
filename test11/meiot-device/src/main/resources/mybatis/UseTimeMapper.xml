@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.UseTimeMapper">
+
+
+    <select id="queryUseTime" resultType="java.util.Map">
+        SELECT unix_timestamp(start_time)*1000 AS startTime,unix_timestamp(IFNULL(end_time,NOW()))*1000 AS endTime FROM use_time WHERE user_id = #{userId}
+        AND project_id= #{projectId}
+        LIMIT 1
+    </select>
+</mapper>

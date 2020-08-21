@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.WaterStatisticsYearsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.WaterStatisticsYears">
+        <id column="id" property="id" />
+        <result column="meterid" property="meterid" />
+        <result column="deviceid" property="deviceid" />
+        <result column="year" property="year" />
+        <result column="month" property="month" />
+        <result column="readcount" property="readcount" />
+        <result column="unit" property="unit" />
+        <result column="user_id" property="userId" />
+        <result column="project_id" property="projectId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+     record_id,   id, meterid, deviceid, year, month, readcount, unit, user_id, project_id, create_time,update_time
+    </sql>
+    <select id="WaterYearsListByMeterIdList" resultType="java.util.Map">
+        SELECT `month` AS name, IFNULL(SUM(water),0) AS value
+        FROM `water_statistics_years`
+        <where>
+            <if test="waterList != null and waterList.size() > 0">
+                AND meterid in
+                <foreach collection="waterList" index="index"
+                         item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="year != null">
+                AND year = #{year}
+            </if>
+
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="projectId != null">
+                AND project_id = #{projectId}
+            </if>
+        </where>
+        GROUP BY
+          month
+    </select>
+
+
+    <select id="selectWaterYearByMeterId" resultType="cn.meiot.entity.WaterStatisticsYears">
+        SELECT <include refid="Base_Column_List"/>
+        from
+        water_statistics_years
+        <where>
+            <if test="meterid != null">
+                AND meterid = #{meterid}
+            </if>
+            <if test="year != null">
+                AND year = #{year}
+            </if>
+            <if test="month != null">
+                AND month = #{month}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="projectId != null">
+                AND project_id = #{projectId}
+            </if>
+        </where>
+        ORDER BY
+        meterid
+
+    </select>
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.BuildingMapper">
+	<!-- 递归查询树状结构 -->
+	<resultMap id="getSelf" type="cn.meiot.entity.dto.pc.BuildingRecursionDto">
+	   <id column="id" property="id"></id>
+	   <result column="name" property="name"></result>
+	   <result column="pId" property="pId"></result>
+	   <result column="level" property="level"></result>
+	   <collection property="listBuildingRecursionDto" ofType="cn.meiot.entity.dto.pc.BuildingRecursionDto" select="selectByPid" column="id"/>
+	</resultMap>
+    <update id="updateBuildingSerialToal">
+		UPDATE building
+		SET  serial_total = serial_total
+		<if test="type == 0">
+			+
+		</if>
+		<if test="type == 1">
+			-
+		</if>
+		1
+		WHERE
+			id IN
+		<foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</update>
+    <delete id="deleteIds">
+		DELETE FROM building WHERE id IN
+		<foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+
+    <select id = "selectByPid" resultMap="getSelf">
+ 	SELECT
+		building.id,
+		building.parent_id AS pId,
+		building.name,
+		building.level
+	FROM
+		`building`
+	WHERE
+		building.parent_id = #{pId}
+ </select>
+ <select id="queryBuilding" resultMap="getSelf" >
+  	SELECT
+		building.id,
+		building.parent_id AS pId,
+		building.name,
+		building.level
+	FROM
+		`building`
+	WHERE
+		building.parent_id = #{pId}
+	AND
+		building.project_id = #{projectId}
+	AND
+		building.user_id = #{userId}
+ </select>
+ 
+ <select id="queryBuildingDg" resultMap="getSelf" >
+  	SELECT
+		building.id,
+		building.parent_id AS pId,
+		building.name,
+		building.level
+	FROM
+		`building`
+	WHERE
+		building.parent_id = #{pId}
+ </select>
+ 
+ <resultMap type="cn.meiot.entity.dto.pc.examination.SerialDto" id="serialMap">
+ 	<result property="id" column="id"/>
+ 	<result property="name" column="name"/>
+ 	<result property="serialNumber" column="serialNumber"/>
+ 	<collection property="listSwitch" ofType="cn.meiot.entity.dto.pc.examination.SwitchDto">
+ 		<result property="switchSn" column="switchSn"/>
+ 		<result property="switchName" column="switchName"/>
+ 	</collection>
+ </resultMap>
+ 
+	 <select id="querySerialAndSwitchByBuilding" resultMap="serialMap">
+		SELECT
+			equipment_user.id,
+			equipment_user.name,
+			equipment_user.serial_number AS serialNumber,
+			switch.switch_sn AS switchSn,
+			switch_name.name AS switchName
+		FROM
+			equipment
+		JOIN
+			equipment_user
+		ON
+			equipment.serial_number = equipment_user.serial_number
+		JOIN
+			switch
+		ON
+			equipment.serial_number = switch.serial_number
+		LEFT JOIN
+			switch_name
+		ON
+			switch.switch_sn = switch_name.switch_sn
+		AND
+			switch_name.user_id = #{userId}
+		WHERE
+			equipment.building_id = #{id}
+		AND
+			equipment_user.user_id = #{userId}
+		AND
+			equipment_user.project_id = #{projectId}
+	 </select>
+
+    <select id="queryBuildingIdByProjectId" resultType="java.lang.Long">
+		SELECT id FROM building WHERE project_id = #{projectId}
+	</select>
+
+    <select id="defaultBuildingByPorjectId" resultType="cn.meiot.entity.dto.pc.BuildingRecursionDto">
+		SELECT building.`level`,building.`name`,building.`level`,building.parent_id AS pid,building.id  FROM building WHERE id = (SELECT
+			equipment.building_id
+		FROM
+			equipment_user
+		JOIN
+			equipment
+		ON
+			equipment_user.serial_number = equipment.serial_number
+		WHERE
+			equipment_user.project_id = #{projectId}
+		LIMIT 1)
+	</select>
+</mapper>

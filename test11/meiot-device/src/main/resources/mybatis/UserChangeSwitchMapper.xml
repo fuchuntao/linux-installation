@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.UserChangeSwitchMapper">
+
+	<select id="queryLog" resultType="java.util.Map">
+		SELECT
+			serial_number AS serialNumber,
+			old_switch_sn AS oldSwitchSn,
+			new_switch_sn AS newSwitchSn,
+			create_time AS createTime,
+			address AS address,
+			name
+		FROM
+			`user_change_switch`
+		WHERE
+			user_id = #{userId} AND type = 0 ORDER BY id DESC
+	</select>
+</mapper>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.RoleProjectPermissionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.RoleProjectPermission">
+        <id column="id" property="id"/>
+        <result column="project_id" property="projectId"/>
+        <result column="role_id" property="roleId"/>
+        <result column="permission_id" property="permissionId"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, project_id, role_id, permission_id
+    </sql>
+    <insert id="save">
+
+         insert into `role_project_permission`(project_id,role_id,permission_id)
+
+          select #{roleProjectPermission.projectId},#{roleProjectPermission.roleId},#{roleProjectPermission.permissionId}
+
+          from DUAL   WHERE   EXISTS  (
+	            SELECT id FROM sys_permission WHERE
+
+	             TYPE = #{roleProjectPermission.type} AND id = #{roleProjectPermission.permissionId}
+      )
+
+
+    </insert>
+    <select id="getPermission" resultType="java.lang.String">
+
+
+        SELECT a.name FROM `sys_permission` a WHERE id IN
+        (
+        SELECT b.permission_id FROM `role_project_permission` b  WHERE b.role_id IN
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+
+        </foreach>
+        )
+        and project_id=#{projectId}
+
+
+
+    </select>
+    <select id="getList" resultType="cn.meiot.entity.SysPermission">
+
+        SELECT
+            re.id,re.name,re.pid,re.p_type,re.type,
+            (
+                CASE
+                WHEN EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        role_project_permission rr
+                    WHERE
+                        rr.permission_id = re.id
+                    AND rr.project_id = #{projectId}
+                    AND rr.role_id = #{roleId}
+                )
+                   THEN
+                        1
+                    ELSE
+                        0
+                    END
+            ) AS checked
+        FROM
+            `sys_permission` re
+        WHERE re.type = 2 AND id IN
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+
+        </foreach>
+
+    </select>
+    <select id="selectPermissionId" resultType="java.lang.Integer">
+
+        select permission_id from role_project_permission where project_id = #{projectId}
+        and role_id in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+
+        </foreach>
+
+
+    </select>
+    <select id="querySurplusPermission" resultType="java.lang.Integer">
+        SELECT   * FROM `role_project_permission` a WHERE a.project_id = #{projectId} AND NOT EXISTS
+        (SELECT b.sys_permission_id FROM project_permission b WHERE b.project_id = #{projectId} AND a.permission_id = b.sys_permission_id)
+
+    </select>
+
+
+</mapper>

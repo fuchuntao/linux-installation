@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.EnterpriseUserFaultMsgEarlyWarningMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.EnterpriseUserFaultMsgEarlyWarning">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="fault_time" property="faultTime" />
+        <result column="event" property="event" />
+        <result column="switch_alias" property="switchAlias" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="switch_index" property="switchIndex" />
+        <result column="switch_sn" property="switchSn" />
+        <result column="equipment_alias" property="equipmentAlias" />
+        <result column="switch_status" property="switchStatus" />
+        <result column="is_read" property="isRead" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="send_time" property="sendTime" />
+        <result column="msg_content" property="msgContent" />
+        <result column="project_id" property="projectId" />
+        <result column="fault_value" property="faultValue" />
+        <result column="is_show" property="isShow" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, fault_time, event, switch_alias, serial_number, switch_index, switch_sn, equipment_alias, switch_status, is_read, create_time, update_time, send_time, msg_content, project_id, fault_value, is_show
+    </sql>
+
+</mapper>

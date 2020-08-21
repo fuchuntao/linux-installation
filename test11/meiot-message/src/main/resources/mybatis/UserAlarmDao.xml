@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.UserAlarmDao">
+
+    <resultMap type="cn.meiot.entity.UserAlarm" id="UserAlarmMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="alarmId" column="alarm_id" jdbcType="INTEGER"/>
+        <result property="isRead" column="is_read" jdbcType="OTHER"/>
+        <result property="deviceAlias" column="device_alias" jdbcType="VARCHAR"/>
+        <result property="switchAlias" column="switch_alias" jdbcType="VARCHAR"/>
+        <result property="msgContent" column="msg_content" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="UserAlarmMap">
+        select
+          id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.user_alarm
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="UserAlarmMap">
+        select
+          id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.user_alarm
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="UserAlarmMap">
+        select
+          id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from meiot_msg.user_alarm
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="alarmId != null">
+                and alarm_id = #{alarmId}
+            </if>
+            <if test="isRead != null">
+                and is_read = #{isRead}
+            </if>
+            <if test="deviceAlias != null and deviceAlias != ''">
+                and device_alias = #{deviceAlias}
+            </if>
+            <if test="switchAlias != null and switchAlias != ''">
+                and switch_alias = #{switchAlias}
+            </if>
+            <if test="msgContent != null and msgContent != ''">
+                and msg_content = #{msgContent}
+            </if>
+        </where>
+    </select>
+
+    <!--根据用户ID和故障类型查询未读数量-->
+    <select id="selectNumber" resultType="java.lang.Integer">
+        select count(1)
+        from app_user_fault_msg_alarm aa inner join user_alarm ua on aa.id=ua.alarm_id
+        where ua.user_id=#{userId} and aa.type=#{type} and ua.is_read=0
+    </select>
+    <select id="selectByAlarmId" resultType="cn.meiot.entity.UserAlarm">
+        select
+        id, user_id, alarm_id, is_read, device_alias, switch_alias, msg_content
+        from user_alarm
+        where alarm_id=#{alarmId}
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into meiot_msg.user_alarm(user_id, alarm_id, is_read, device_alias, switch_alias, msg_content)
+        values (#{userId}, #{alarmId}, #{isRead}, #{deviceAlias}, #{switchAlias}, #{msgContent})
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update meiot_msg.user_alarm
+        <set>
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="alarmId != null">
+                alarm_id = #{alarmId},
+            </if>
+            <if test="isRead != null">
+                is_read = #{isRead},
+            </if>
+            <if test="deviceAlias != null and deviceAlias != ''">
+                device_alias = #{deviceAlias},
+            </if>
+            <if test="switchAlias != null and switchAlias != ''">
+                switch_alias = #{switchAlias},
+            </if>
+            <if test="msgContent != null and msgContent != ''">
+                msg_content = #{msgContent},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--from user_alarm ua inner join app_user_fault_msg_alarm aa on aa.id=ua.alarm_id-->
+
+    <update id="updateByFaultMessageId">
+        update user_alarm ua,app_user_fault_msg_alarm aa
+        <set>
+            <if test="userAlarm.userId != null">
+                ua.user_id = #{userAlarm.userId},
+            </if>
+            <if test="userAlarm.alarmId != null">
+                ua.alarm_id = #{userAlarm.alarmId},
+            </if>
+            <if test="userAlarm.isRead != null">
+                ua.is_read = #{userAlarm.isRead},
+            </if>
+            <if test="userAlarm.deviceAlias != null and userAlarm.deviceAlias != ''">
+                ua.device_alias = #{userAlarm.deviceAlias},
+            </if>
+            <if test="userAlarm.switchAlias != null and userAlarm.switchAlias != ''">
+                ua.switch_alias = #{userAlarm.switchAlias},
+            </if>
+            <if test="userAlarm.msgContent != null and userAlarm.msgContent != ''">
+                ua.msg_content = #{userAlarm.msgContent},
+            </if>
+        </set>
+        where  aa.id=ua.alarm_id and ua.user_id = #{userId} and aa.type=#{type} and aa.id  in
+        <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from meiot_msg.user_alarm where id = #{id}
+    </delete>
+
+
+
+</mapper>

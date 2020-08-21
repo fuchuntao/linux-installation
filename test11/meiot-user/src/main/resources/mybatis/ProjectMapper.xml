@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.ProjectMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.Project">
+        <id column="id" property="id" />
+        <result column="project_name" property="projectName" />
+        <result column="enterprise_id" property="enterpriseId" />
+
+        <result column="project_type" property="projectType" />
+        <result column="contacts" property="contacts" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="agent_id" property="agentId" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, project_name, enterprise_id,project_type, contacts, phone, email, agent_id, create_time, update_time
+    </sql>
+    <!--查询项目列表-->
+    <select id="getList" resultType="cn.meiot.entity.Project">
+       select a.*,b.enterprise_name as enterpriseName,c.name as projectTypeStr from  ( select
+        <include refid="Base_Column_List"></include>
+        from project
+        where deleted = 0
+        <if test="keyword != null and keyword !='' ">
+            and project_name like "%"#{keyword} "%"
+        </if>
+
+        <if test="type != null and type !='' ">
+            and project_type =#{type}
+        </if>
+
+        <if test="enterpriseId != null and enterpriseId !='' ">
+            and enterprise_id = #{enterpriseId}
+        </if>
+         order by create_time desc limit #{pageVo.offset},#{pageVo.pageSize} ) a
+         left join enterprise b on a.enterprise_id = b.id
+        left join project_type c on a.project_type = c.id
+
+    </select>
+
+    <!--查询项目列表总数-->
+    <select id="getListCount" resultType="java.lang.Integer">
+        select
+        count(1)
+        from project
+        where deleted = 0
+        <if test="keyword != null and keyword !='' ">
+            and project_name like "%"#{keyword} "%"
+        </if>
+
+        <if test="type != null and type !='' ">
+            and project_type =#{type}
+        </if>
+
+        <if test="enterpriseId != null and enterpriseId !='' ">
+            and enterprise_id = #{enterpriseId}
+        </if>
+    </select>
+    <select id="getListByRoles" resultType="java.util.Map">
+
+        SELECT id,project_name as  projectName FROM `project` WHERE id IN(SELECT project_id FROM `role_project` WHERE role_id  in
+
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+
+        </foreach>
+
+        )
+
+    </select>
+    <select id="selectListByCondition" resultType="cn.meiot.entity.Project">
+
+        select a.*,b.enterprise_name as enterpriseName,c.name as projectTypeStr from  ( select
+        <include refid="Base_Column_List"></include>
+        from project
+        where deleted = 0
+        <if test="keyword != null and keyword !='' ">
+            and project_name like "%"#{keyword} "%"
+        </if>
+
+        <if test="type != null and type !='' ">
+            and project_type =#{type}
+        </if>
+
+        <if test="enterpriseId != null and enterpriseId !='' ">
+            and enterprise_id = #{enterpriseId}
+        </if>
+        order by create_time desc ) a
+        left join enterprise b on a.enterprise_id = b.id
+        left join project_type c on a.project_type = c.id
+
+    </select>
+    <select id="getProjectIdByRoleId" resultType="java.lang.Integer">
+
+        SELECT id FROM `project` WHERE id IN(SELECT project_id FROM `role_project` WHERE role_id in
+
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+
+        </foreach>
+        )
+    </select>
+    <select id="querySurplusProjectPermission" resultType="java.lang.Integer">
+        SELECT a.id FROM  project_permission a  WHERE a.project_id = #{id} AND NOT EXISTS
+
+            (  SELECT b.permission_id FROM project_type_permission b WHERE project_type_id = #{projectTypeId} AND  a.sys_permission_id = b.permission_id)
+
+
+    </select>
+
+</mapper>

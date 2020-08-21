@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.mapper.PcLeakageHoursMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.meiot.entity.PcLeakageHours">
+        <id column="id" property="id" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="switch_index" property="switchIndex" />
+        <result column="switch_sn" property="switchSn" />
+        <result column="leakage" property="leakage" />
+        <result column="s_year" property="sYear" />
+        <result column="s_month" property="sMonth" />
+        <result column="s_day" property="sDay" />
+        <result column="s_time" property="sTime" />
+        <result column="create_time" property="createTime" />
+        <result column="user_id" property="userId" />
+        <result column="project_id" property="projectId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, serial_number, switch_index, switch_sn, leakage, s_year, s_month, s_day, s_time, create_time, user_id, project_id
+    </sql>	
+    
+	<select id="selectListBySerialNumber"  resultType="cn.meiot.entity.vo.StatisticsDto">
+		SELECT
+			user_id AS userId,
+			serial_number AS serialNumber,
+			switch_index AS switchIndex,
+			switch_sn AS switchSn,
+			s_year AS year,
+			s_month AS month,
+			s_day AS day,
+			AVG(${tableName}) AS data,
+			project_id AS projectId
+		FROM
+			pc_${tableName}_hours
+		WHERE
+			s_year = #{year} AND s_month = #{month}
+			 AND s_day = #{day}
+		GROUP BY
+			serial_number,switch_sn,project_id, user_id
+	</select>
+	
+	<select id="queryStatistics" resultType="java.util.HashMap">
+		SELECT
+			ROUND(${function}(${tableName}),1) AS value,
+			<if test ="type == 0">
+			s_month
+			</if>
+			<if test ="type == 1">
+			s_day
+			</if>
+			<if test ="type == 2">
+			s_time
+			</if> AS name
+		FROM
+			pc_${tableName}_${timeName}
+		WHERE
+			project_id = #{projectId}
+		AND
+			s_year = #{years}
+		<if test="switchSn != null ">
+		AND
+			switch_sn = #{switchSn}
+		</if>
+		<if test="switchSnList != null and switchSnList.size() > 0">
+			AND switch_sn in
+			<foreach collection="switchSnList" index="index"
+					 item="item" open="(" separator="," close=")">
+				#{item.masterSn}
+			</foreach>
+		</if>
+
+
+		<if test ="type == 1 or type == 2">
+		AND
+			s_month = #{months}
+		</if>
+		<if test ="type == 2">
+		AND
+			s_day = #{hours}
+		</if>
+		GROUP BY
+		<if test ="type == 0">
+		s_month
+		</if>
+		<if test ="type == 1">
+		s_day
+		</if>
+		<if test ="type == 2">
+		s_time
+		</if>
+	</select>
+
+
+
+	<sql id="parametersDtoType">
+		<if test="type == 0 ">
+			s_month,
+		</if>
+		<if test="type == 1 ">
+			s_day,
+		</if>
+		<if test="type == 2 ">
+			s_time,
+		</if>
+	</sql>
+
+
+	<sql id="parametersDtoTypeA">
+		<if test="type == 0 ">
+			a.s_month
+		</if>
+		<if test="type == 1 ">
+			a.s_day
+		</if>
+		<if test="type == 2 ">
+			a.s_time
+		</if>
+	</sql>
+
+	<select id="queryStatisticsSum" resultType="java.util.HashMap">
+		SELECT
+		ROUND(${function}(a.${tableName}),1) AS value,
+		<include refid="parametersDtoTypeA"/>
+		AS name
+		FROM
+		(
+		SELECT
+		<include refid="parametersDtoType"/>
+		${tableName}
+		FROM pc_${tableName}_${timeName}
+		WHERE id = 0
+		<if test="switchSnList != null and switchSnList.size() > 0">
+		<foreach collection="switchSnList" item="item" index="index">
+			UNION all
+			SELECT
+			<include refid="parametersDtoType"/>
+			${tableName}
+			FROM pc_${tableName}_${timeName}
+			WHERE serial_number = #{item.serialNumber}
+			AND switch_sn = #{item.masterSn}
+			<if test="years != null ">
+				AND s_year = #{years}
+			</if>
+			<if test="months != null and type == 1">
+				AND s_month = #{months}
+			</if>
+			<if test="hours != null and type == 2 ">
+				AND s_day = #{hours}
+			</if>
+			<if test="projectId != 0 ">
+				AND project_id = #{projectId}
+			</if>
+		</foreach>
+        </if>
+		) a
+		GROUP BY
+		<include refid="parametersDtoTypeA"/>
+	</select>
+
+
+
+	<select id="selectStatisticsDtoList"  resultType="cn.meiot.entity.vo.StatisticsDto">
+		SELECT
+			user_id AS userId,
+			serial_number AS serialNumber,
+			switch_index AS switchIndex,
+			switch_sn AS switchSn,
+			s_year AS year,
+			s_month AS month,
+			<if test="type == 1 ">
+			s_day AS day,
+			</if>
+			project_id AS projectId
+		FROM
+			${platform}_${tableName}_${timeName}
+		WHERE
+		1=1
+		<if test ="sYear != null ">
+			AND
+			s_year = #{sYear}
+		</if>
+		<if test ="sMonth != null ">
+			AND
+			s_month = #{sMonth}
+		</if>
+		<if test ="sDay != null ">
+			AND
+			s_day = #{sDay}
+		</if>
+		GROUP BY
+			serial_number,switch_sn,project_id, user_id
+	</select>
+	<select id="leakageData" resultType="java.util.Map">
+		SELECT
+		leakage AS value,
+		unix_timestamp(create_time) * 1000 AS name
+		FROM
+		pc_leakage_hours
+		WHERE
+		<if test ="pcLeakageHours.serialNumber != null ">
+			serial_number = #{pcLeakageHours.serialNumber}
+		</if>
+		<if test ="pcLeakageHours.switchSn != null ">
+			AND
+			switch_sn = #{pcLeakageHours.switchSn}
+		</if>
+		<if test ="pcLeakageHours.userId != null ">
+			AND
+			user_id = #{pcLeakageHours.userId }
+		</if>
+		<if test ="pcLeakageHours.projectId != null ">
+			AND
+			project_id = #{pcLeakageHours.projectId}
+		</if>
+
+		<if test="startTime != null and endTime != null">
+			AND unix_timestamp(create_time) * 1000 between #{startTime} AND #{endTime}
+		</if>
+		ORDER BY create_time
+	</select>
+
+</mapper>

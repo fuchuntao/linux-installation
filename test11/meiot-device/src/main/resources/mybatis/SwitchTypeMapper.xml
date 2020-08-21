@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.meiot.dao.SwitchTypeMapper">
+	
+	 <resultMap id="SwitchTypeVoMap" type="cn.meiot.entity.vo.SwitchTypeVo">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <collection property="listSwitchVo" ofType="cn.meiot.entity.vo.SwitchVo">
+             <result property="swtichSn" column="switch_sn"/>
+       		 <result property="swtichIndex" column="switch_index"/>
+        </collection>
+    </resultMap>
+	
+	<select id="querySwitchByProjectId" resultMap="SwitchTypeVoMap">
+		SELECT
+			switch_name.switch_type AS id,
+			switch_type.name,
+			switch.switch_sn,
+			switch.switch_index
+		FROM
+			switch
+		LEFT JOIN
+			switch_name
+		ON
+			switch.switch_sn =  switch_name.switch_sn
+		LEFT JOIN
+			equipment_user
+		ON
+			equipment_user.serial_number = switch.serial_number
+		LEFT JOIN
+			switch_type
+		ON
+			switch_type.id = switch_name.switch_type
+		WHERE
+			switch_type.project_id = #{projectId}
+		AND
+			equipment_user.project_id = #{projectId}
+	</select>
+	<select id="selectPage" resultType="cn.meiot.entity.db.SwitchType">
+		SELECT
+		 	id,
+		  	name,
+		is_default AS isDefault
+		FROM
+		`switch_type`
+		WHERE
+		project_id = #{projectId}
+		<if test=" name != null and name != '' ">
+			AND
+			name LIKE CONCAT('%',#{name},'%')
+		</if>
+	</select>
+    <select id="queryNameCount" resultType="java.lang.Integer">
+		SELECT
+		COUNT(id)
+		FROM
+			`switch_type`
+		WHERE
+			project_id = #{projectId}
+		<if test=" id != null">
+		AND
+			id != #{id}
+		</if>
+		AND
+			`name` = #{name}
+	</select>
+    <select id="queryDefaultId" resultType="java.lang.Long">
+		SELECT
+			id
+		FROM
+			`switch_type`
+		WHERE
+			switch_type.is_default = 1
+		AND
+			project_id = #{projectId}
+	</select>
+
+
+</mapper>
