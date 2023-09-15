@@ -358,8 +358,18 @@ docker images
 #查看启动的镜像
 docker ps -a
 
+#创建镜像
+docker run -d -p [对外端口]:[内部端口][镜像名称]
+#查询容器信息
+docker inspect [容器名称|容器id]
+#查询容器日志
+docker logs [容器名称|容器id]
+#查询容器状态
+docker stats [容器名称|容器id]
+
 #启动mysql镜像
 docker run --name mysql8.0 -p 3307:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0
+#启动容器
 docker start redis
 docker stop redis
        
